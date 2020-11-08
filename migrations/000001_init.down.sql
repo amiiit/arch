@@ -1,2 +1,2 @@
 DROP TABLE users;
-drop trigger user_update;
+-- drop trigger user_update;
