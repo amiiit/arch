@@ -9,16 +9,16 @@ import (
 )
 
 type createUserCmd struct {
-	username  string
-	firstName string
-	lastName  string
-	email     string
-	password  string
+	Username  string `json:"username"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 type UserAPI struct {
-	UserService    user.UserService
-	UserRepository user.UserRepository
+	UserService    user.IUserService
+	UserRepository user.IUserRepository
 }
 
 func (a UserAPI) HandleCreateUser(c echo.Context) error {
@@ -29,10 +29,11 @@ func (a UserAPI) HandleCreateUser(c echo.Context) error {
 	}
 	ctx := context.Background()
 	newUser, err := a.UserService.CompleteUserObject(user.User{
-		Email: cmd.email,
-		FirstName: cmd.firstName,
-		LastName: cmd.lastName,
-	}, cmd.password)
+		Username: cmd.Username,
+		Email: cmd.Email,
+		FirstName: cmd.FirstName,
+		LastName: cmd.LastName,
+	}, cmd.Password)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "validation failed")
 	}
@@ -40,7 +41,7 @@ func (a UserAPI) HandleCreateUser(c echo.Context) error {
 	persistedUser, err := a.UserRepository.CreateUser(ctx, newUser)
 	if err != nil {
 		if errors.Is(err, user.ErrUsernameTaken) {
-			return c.String(http.StatusConflict, "username already exists")
+			return c.String(http.StatusConflict, "Username already exists")
 		}
 		return c.String(500, "error creating new user")
 	}

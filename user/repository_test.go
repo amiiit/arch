@@ -39,7 +39,7 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 			Username:       "mustbeunique",
 			FirstName:      "Test",
 			LastName:       "User",
-			Email:          "test@user.net",
+			Email:          "test@user1.net",
 			Phone:          "+123456789",
 			HashedPassword: "fbjslfuhew",
 			PasswordSalt:   "123",
