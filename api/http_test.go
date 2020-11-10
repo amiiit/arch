@@ -35,7 +35,7 @@ func TestUserAPI_HandleCreateUser(t *testing.T) {
 		FirstName: cmd.FirstName,
 		LastName: cmd.LastName,
 	}
-	userService.CompleteUserObjectMock.Inspect(func(user user.User, password string) {
+	userService.SetUserPasswordMock.Inspect(func(user user.User, password string) {
 		require.Equal(t, cmd.Username, user.Username)
 		require.Equal(t, cmd.Password, password)
 	}).Return(mockUserToPersist, nil)

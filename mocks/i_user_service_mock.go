@@ -17,11 +17,11 @@ import (
 type IUserServiceMock struct {
 	t minimock.Tester
 
-	funcCompleteUserObject          func(user mm_user.User, password string) (u1 mm_user.User, err error)
-	inspectFuncCompleteUserObject   func(user mm_user.User, password string)
-	afterCompleteUserObjectCounter  uint64
-	beforeCompleteUserObjectCounter uint64
-	CompleteUserObjectMock          mIUserServiceMockCompleteUserObject
+	funcSetUserPassword          func(user mm_user.User, password string) (u1 mm_user.User, err error)
+	inspectFuncSetUserPassword   func(user mm_user.User, password string)
+	afterSetUserPasswordCounter  uint64
+	beforeSetUserPasswordCounter uint64
+	SetUserPasswordMock          mIUserServiceMockSetUserPassword
 }
 
 // NewIUserServiceMock returns a mock for user.IUserService
@@ -31,233 +31,233 @@ func NewIUserServiceMock(t minimock.Tester) *IUserServiceMock {
 		controller.RegisterMocker(m)
 	}
 
-	m.CompleteUserObjectMock = mIUserServiceMockCompleteUserObject{mock: m}
-	m.CompleteUserObjectMock.callArgs = []*IUserServiceMockCompleteUserObjectParams{}
+	m.SetUserPasswordMock = mIUserServiceMockSetUserPassword{mock: m}
+	m.SetUserPasswordMock.callArgs = []*IUserServiceMockSetUserPasswordParams{}
 
 	return m
 }
 
-type mIUserServiceMockCompleteUserObject struct {
+type mIUserServiceMockSetUserPassword struct {
 	mock               *IUserServiceMock
-	defaultExpectation *IUserServiceMockCompleteUserObjectExpectation
-	expectations       []*IUserServiceMockCompleteUserObjectExpectation
+	defaultExpectation *IUserServiceMockSetUserPasswordExpectation
+	expectations       []*IUserServiceMockSetUserPasswordExpectation
 
-	callArgs []*IUserServiceMockCompleteUserObjectParams
+	callArgs []*IUserServiceMockSetUserPasswordParams
 	mutex    sync.RWMutex
 }
 
-// IUserServiceMockCompleteUserObjectExpectation specifies expectation struct of the IUserService.CompleteUserObject
-type IUserServiceMockCompleteUserObjectExpectation struct {
+// IUserServiceMockSetUserPasswordExpectation specifies expectation struct of the IUserService.SetUserPassword
+type IUserServiceMockSetUserPasswordExpectation struct {
 	mock    *IUserServiceMock
-	params  *IUserServiceMockCompleteUserObjectParams
-	results *IUserServiceMockCompleteUserObjectResults
+	params  *IUserServiceMockSetUserPasswordParams
+	results *IUserServiceMockSetUserPasswordResults
 	Counter uint64
 }
 
-// IUserServiceMockCompleteUserObjectParams contains parameters of the IUserService.CompleteUserObject
-type IUserServiceMockCompleteUserObjectParams struct {
+// IUserServiceMockSetUserPasswordParams contains parameters of the IUserService.SetUserPassword
+type IUserServiceMockSetUserPasswordParams struct {
 	user     mm_user.User
 	password string
 }
 
-// IUserServiceMockCompleteUserObjectResults contains results of the IUserService.CompleteUserObject
-type IUserServiceMockCompleteUserObjectResults struct {
+// IUserServiceMockSetUserPasswordResults contains results of the IUserService.SetUserPassword
+type IUserServiceMockSetUserPasswordResults struct {
 	u1  mm_user.User
 	err error
 }
 
-// Expect sets up expected params for IUserService.CompleteUserObject
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) Expect(user mm_user.User, password string) *mIUserServiceMockCompleteUserObject {
-	if mmCompleteUserObject.mock.funcCompleteUserObject != nil {
-		mmCompleteUserObject.mock.t.Fatalf("IUserServiceMock.CompleteUserObject mock is already set by Set")
+// Expect sets up expected params for IUserService.SetUserPassword
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) Expect(user mm_user.User, password string) *mIUserServiceMockSetUserPassword {
+	if mmSetUserPassword.mock.funcSetUserPassword != nil {
+		mmSetUserPassword.mock.t.Fatalf("IUserServiceMock.SetUserPassword mock is already set by Set")
 	}
 
-	if mmCompleteUserObject.defaultExpectation == nil {
-		mmCompleteUserObject.defaultExpectation = &IUserServiceMockCompleteUserObjectExpectation{}
+	if mmSetUserPassword.defaultExpectation == nil {
+		mmSetUserPassword.defaultExpectation = &IUserServiceMockSetUserPasswordExpectation{}
 	}
 
-	mmCompleteUserObject.defaultExpectation.params = &IUserServiceMockCompleteUserObjectParams{user, password}
-	for _, e := range mmCompleteUserObject.expectations {
-		if minimock.Equal(e.params, mmCompleteUserObject.defaultExpectation.params) {
-			mmCompleteUserObject.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCompleteUserObject.defaultExpectation.params)
+	mmSetUserPassword.defaultExpectation.params = &IUserServiceMockSetUserPasswordParams{user, password}
+	for _, e := range mmSetUserPassword.expectations {
+		if minimock.Equal(e.params, mmSetUserPassword.defaultExpectation.params) {
+			mmSetUserPassword.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSetUserPassword.defaultExpectation.params)
 		}
 	}
 
-	return mmCompleteUserObject
+	return mmSetUserPassword
 }
 
-// Inspect accepts an inspector function that has same arguments as the IUserService.CompleteUserObject
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) Inspect(f func(user mm_user.User, password string)) *mIUserServiceMockCompleteUserObject {
-	if mmCompleteUserObject.mock.inspectFuncCompleteUserObject != nil {
-		mmCompleteUserObject.mock.t.Fatalf("Inspect function is already set for IUserServiceMock.CompleteUserObject")
+// Inspect accepts an inspector function that has same arguments as the IUserService.SetUserPassword
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) Inspect(f func(user mm_user.User, password string)) *mIUserServiceMockSetUserPassword {
+	if mmSetUserPassword.mock.inspectFuncSetUserPassword != nil {
+		mmSetUserPassword.mock.t.Fatalf("Inspect function is already set for IUserServiceMock.SetUserPassword")
 	}
 
-	mmCompleteUserObject.mock.inspectFuncCompleteUserObject = f
+	mmSetUserPassword.mock.inspectFuncSetUserPassword = f
 
-	return mmCompleteUserObject
+	return mmSetUserPassword
 }
 
-// Return sets up results that will be returned by IUserService.CompleteUserObject
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) Return(u1 mm_user.User, err error) *IUserServiceMock {
-	if mmCompleteUserObject.mock.funcCompleteUserObject != nil {
-		mmCompleteUserObject.mock.t.Fatalf("IUserServiceMock.CompleteUserObject mock is already set by Set")
+// Return sets up results that will be returned by IUserService.SetUserPassword
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) Return(u1 mm_user.User, err error) *IUserServiceMock {
+	if mmSetUserPassword.mock.funcSetUserPassword != nil {
+		mmSetUserPassword.mock.t.Fatalf("IUserServiceMock.SetUserPassword mock is already set by Set")
 	}
 
-	if mmCompleteUserObject.defaultExpectation == nil {
-		mmCompleteUserObject.defaultExpectation = &IUserServiceMockCompleteUserObjectExpectation{mock: mmCompleteUserObject.mock}
+	if mmSetUserPassword.defaultExpectation == nil {
+		mmSetUserPassword.defaultExpectation = &IUserServiceMockSetUserPasswordExpectation{mock: mmSetUserPassword.mock}
 	}
-	mmCompleteUserObject.defaultExpectation.results = &IUserServiceMockCompleteUserObjectResults{u1, err}
-	return mmCompleteUserObject.mock
+	mmSetUserPassword.defaultExpectation.results = &IUserServiceMockSetUserPasswordResults{u1, err}
+	return mmSetUserPassword.mock
 }
 
-//Set uses given function f to mock the IUserService.CompleteUserObject method
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) Set(f func(user mm_user.User, password string) (u1 mm_user.User, err error)) *IUserServiceMock {
-	if mmCompleteUserObject.defaultExpectation != nil {
-		mmCompleteUserObject.mock.t.Fatalf("Default expectation is already set for the IUserService.CompleteUserObject method")
+//Set uses given function f to mock the IUserService.SetUserPassword method
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) Set(f func(user mm_user.User, password string) (u1 mm_user.User, err error)) *IUserServiceMock {
+	if mmSetUserPassword.defaultExpectation != nil {
+		mmSetUserPassword.mock.t.Fatalf("Default expectation is already set for the IUserService.SetUserPassword method")
 	}
 
-	if len(mmCompleteUserObject.expectations) > 0 {
-		mmCompleteUserObject.mock.t.Fatalf("Some expectations are already set for the IUserService.CompleteUserObject method")
+	if len(mmSetUserPassword.expectations) > 0 {
+		mmSetUserPassword.mock.t.Fatalf("Some expectations are already set for the IUserService.SetUserPassword method")
 	}
 
-	mmCompleteUserObject.mock.funcCompleteUserObject = f
-	return mmCompleteUserObject.mock
+	mmSetUserPassword.mock.funcSetUserPassword = f
+	return mmSetUserPassword.mock
 }
 
-// When sets expectation for the IUserService.CompleteUserObject which will trigger the result defined by the following
+// When sets expectation for the IUserService.SetUserPassword which will trigger the result defined by the following
 // Then helper
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) When(user mm_user.User, password string) *IUserServiceMockCompleteUserObjectExpectation {
-	if mmCompleteUserObject.mock.funcCompleteUserObject != nil {
-		mmCompleteUserObject.mock.t.Fatalf("IUserServiceMock.CompleteUserObject mock is already set by Set")
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) When(user mm_user.User, password string) *IUserServiceMockSetUserPasswordExpectation {
+	if mmSetUserPassword.mock.funcSetUserPassword != nil {
+		mmSetUserPassword.mock.t.Fatalf("IUserServiceMock.SetUserPassword mock is already set by Set")
 	}
 
-	expectation := &IUserServiceMockCompleteUserObjectExpectation{
-		mock:   mmCompleteUserObject.mock,
-		params: &IUserServiceMockCompleteUserObjectParams{user, password},
+	expectation := &IUserServiceMockSetUserPasswordExpectation{
+		mock:   mmSetUserPassword.mock,
+		params: &IUserServiceMockSetUserPasswordParams{user, password},
 	}
-	mmCompleteUserObject.expectations = append(mmCompleteUserObject.expectations, expectation)
+	mmSetUserPassword.expectations = append(mmSetUserPassword.expectations, expectation)
 	return expectation
 }
 
-// Then sets up IUserService.CompleteUserObject return parameters for the expectation previously defined by the When method
-func (e *IUserServiceMockCompleteUserObjectExpectation) Then(u1 mm_user.User, err error) *IUserServiceMock {
-	e.results = &IUserServiceMockCompleteUserObjectResults{u1, err}
+// Then sets up IUserService.SetUserPassword return parameters for the expectation previously defined by the When method
+func (e *IUserServiceMockSetUserPasswordExpectation) Then(u1 mm_user.User, err error) *IUserServiceMock {
+	e.results = &IUserServiceMockSetUserPasswordResults{u1, err}
 	return e.mock
 }
 
-// CompleteUserObject implements user.IUserService
-func (mmCompleteUserObject *IUserServiceMock) CompleteUserObject(user mm_user.User, password string) (u1 mm_user.User, err error) {
-	mm_atomic.AddUint64(&mmCompleteUserObject.beforeCompleteUserObjectCounter, 1)
-	defer mm_atomic.AddUint64(&mmCompleteUserObject.afterCompleteUserObjectCounter, 1)
+// SetUserPassword implements user.IUserService
+func (mmSetUserPassword *IUserServiceMock) SetUserPassword(user mm_user.User, password string) (u1 mm_user.User, err error) {
+	mm_atomic.AddUint64(&mmSetUserPassword.beforeSetUserPasswordCounter, 1)
+	defer mm_atomic.AddUint64(&mmSetUserPassword.afterSetUserPasswordCounter, 1)
 
-	if mmCompleteUserObject.inspectFuncCompleteUserObject != nil {
-		mmCompleteUserObject.inspectFuncCompleteUserObject(user, password)
+	if mmSetUserPassword.inspectFuncSetUserPassword != nil {
+		mmSetUserPassword.inspectFuncSetUserPassword(user, password)
 	}
 
-	mm_params := &IUserServiceMockCompleteUserObjectParams{user, password}
+	mm_params := &IUserServiceMockSetUserPasswordParams{user, password}
 
 	// Record call args
-	mmCompleteUserObject.CompleteUserObjectMock.mutex.Lock()
-	mmCompleteUserObject.CompleteUserObjectMock.callArgs = append(mmCompleteUserObject.CompleteUserObjectMock.callArgs, mm_params)
-	mmCompleteUserObject.CompleteUserObjectMock.mutex.Unlock()
+	mmSetUserPassword.SetUserPasswordMock.mutex.Lock()
+	mmSetUserPassword.SetUserPasswordMock.callArgs = append(mmSetUserPassword.SetUserPasswordMock.callArgs, mm_params)
+	mmSetUserPassword.SetUserPasswordMock.mutex.Unlock()
 
-	for _, e := range mmCompleteUserObject.CompleteUserObjectMock.expectations {
+	for _, e := range mmSetUserPassword.SetUserPasswordMock.expectations {
 		if minimock.Equal(e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
 			return e.results.u1, e.results.err
 		}
 	}
 
-	if mmCompleteUserObject.CompleteUserObjectMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmCompleteUserObject.CompleteUserObjectMock.defaultExpectation.Counter, 1)
-		mm_want := mmCompleteUserObject.CompleteUserObjectMock.defaultExpectation.params
-		mm_got := IUserServiceMockCompleteUserObjectParams{user, password}
+	if mmSetUserPassword.SetUserPasswordMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSetUserPassword.SetUserPasswordMock.defaultExpectation.Counter, 1)
+		mm_want := mmSetUserPassword.SetUserPasswordMock.defaultExpectation.params
+		mm_got := IUserServiceMockSetUserPasswordParams{user, password}
 		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmCompleteUserObject.t.Errorf("IUserServiceMock.CompleteUserObject got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+			mmSetUserPassword.t.Errorf("IUserServiceMock.SetUserPassword got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
 		}
 
-		mm_results := mmCompleteUserObject.CompleteUserObjectMock.defaultExpectation.results
+		mm_results := mmSetUserPassword.SetUserPasswordMock.defaultExpectation.results
 		if mm_results == nil {
-			mmCompleteUserObject.t.Fatal("No results are set for the IUserServiceMock.CompleteUserObject")
+			mmSetUserPassword.t.Fatal("No results are set for the IUserServiceMock.SetUserPassword")
 		}
 		return (*mm_results).u1, (*mm_results).err
 	}
-	if mmCompleteUserObject.funcCompleteUserObject != nil {
-		return mmCompleteUserObject.funcCompleteUserObject(user, password)
+	if mmSetUserPassword.funcSetUserPassword != nil {
+		return mmSetUserPassword.funcSetUserPassword(user, password)
 	}
-	mmCompleteUserObject.t.Fatalf("Unexpected call to IUserServiceMock.CompleteUserObject. %v %v", user, password)
+	mmSetUserPassword.t.Fatalf("Unexpected call to IUserServiceMock.SetUserPassword. %v %v", user, password)
 	return
 }
 
-// CompleteUserObjectAfterCounter returns a count of finished IUserServiceMock.CompleteUserObject invocations
-func (mmCompleteUserObject *IUserServiceMock) CompleteUserObjectAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmCompleteUserObject.afterCompleteUserObjectCounter)
+// SetUserPasswordAfterCounter returns a count of finished IUserServiceMock.SetUserPassword invocations
+func (mmSetUserPassword *IUserServiceMock) SetUserPasswordAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSetUserPassword.afterSetUserPasswordCounter)
 }
 
-// CompleteUserObjectBeforeCounter returns a count of IUserServiceMock.CompleteUserObject invocations
-func (mmCompleteUserObject *IUserServiceMock) CompleteUserObjectBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmCompleteUserObject.beforeCompleteUserObjectCounter)
+// SetUserPasswordBeforeCounter returns a count of IUserServiceMock.SetUserPassword invocations
+func (mmSetUserPassword *IUserServiceMock) SetUserPasswordBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSetUserPassword.beforeSetUserPasswordCounter)
 }
 
-// Calls returns a list of arguments used in each call to IUserServiceMock.CompleteUserObject.
+// Calls returns a list of arguments used in each call to IUserServiceMock.SetUserPassword.
 // The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmCompleteUserObject *mIUserServiceMockCompleteUserObject) Calls() []*IUserServiceMockCompleteUserObjectParams {
-	mmCompleteUserObject.mutex.RLock()
+func (mmSetUserPassword *mIUserServiceMockSetUserPassword) Calls() []*IUserServiceMockSetUserPasswordParams {
+	mmSetUserPassword.mutex.RLock()
 
-	argCopy := make([]*IUserServiceMockCompleteUserObjectParams, len(mmCompleteUserObject.callArgs))
-	copy(argCopy, mmCompleteUserObject.callArgs)
+	argCopy := make([]*IUserServiceMockSetUserPasswordParams, len(mmSetUserPassword.callArgs))
+	copy(argCopy, mmSetUserPassword.callArgs)
 
-	mmCompleteUserObject.mutex.RUnlock()
+	mmSetUserPassword.mutex.RUnlock()
 
 	return argCopy
 }
 
-// MinimockCompleteUserObjectDone returns true if the count of the CompleteUserObject invocations corresponds
+// MinimockSetUserPasswordDone returns true if the count of the SetUserPassword invocations corresponds
 // the number of defined expectations
-func (m *IUserServiceMock) MinimockCompleteUserObjectDone() bool {
-	for _, e := range m.CompleteUserObjectMock.expectations {
+func (m *IUserServiceMock) MinimockSetUserPasswordDone() bool {
+	for _, e := range m.SetUserPasswordMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
 			return false
 		}
 	}
 
 	// if default expectation was set then invocations count should be greater than zero
-	if m.CompleteUserObjectMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCompleteUserObjectCounter) < 1 {
+	if m.SetUserPasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterSetUserPasswordCounter) < 1 {
 		return false
 	}
 	// if func was set then invocations count should be greater than zero
-	if m.funcCompleteUserObject != nil && mm_atomic.LoadUint64(&m.afterCompleteUserObjectCounter) < 1 {
+	if m.funcSetUserPassword != nil && mm_atomic.LoadUint64(&m.afterSetUserPasswordCounter) < 1 {
 		return false
 	}
 	return true
 }
 
-// MinimockCompleteUserObjectInspect logs each unmet expectation
-func (m *IUserServiceMock) MinimockCompleteUserObjectInspect() {
-	for _, e := range m.CompleteUserObjectMock.expectations {
+// MinimockSetUserPasswordInspect logs each unmet expectation
+func (m *IUserServiceMock) MinimockSetUserPasswordInspect() {
+	for _, e := range m.SetUserPasswordMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to IUserServiceMock.CompleteUserObject with params: %#v", *e.params)
+			m.t.Errorf("Expected call to IUserServiceMock.SetUserPassword with params: %#v", *e.params)
 		}
 	}
 
 	// if default expectation was set then invocations count should be greater than zero
-	if m.CompleteUserObjectMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCompleteUserObjectCounter) < 1 {
-		if m.CompleteUserObjectMock.defaultExpectation.params == nil {
-			m.t.Error("Expected call to IUserServiceMock.CompleteUserObject")
+	if m.SetUserPasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterSetUserPasswordCounter) < 1 {
+		if m.SetUserPasswordMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserServiceMock.SetUserPassword")
 		} else {
-			m.t.Errorf("Expected call to IUserServiceMock.CompleteUserObject with params: %#v", *m.CompleteUserObjectMock.defaultExpectation.params)
+			m.t.Errorf("Expected call to IUserServiceMock.SetUserPassword with params: %#v", *m.SetUserPasswordMock.defaultExpectation.params)
 		}
 	}
 	// if func was set then invocations count should be greater than zero
-	if m.funcCompleteUserObject != nil && mm_atomic.LoadUint64(&m.afterCompleteUserObjectCounter) < 1 {
-		m.t.Error("Expected call to IUserServiceMock.CompleteUserObject")
+	if m.funcSetUserPassword != nil && mm_atomic.LoadUint64(&m.afterSetUserPasswordCounter) < 1 {
+		m.t.Error("Expected call to IUserServiceMock.SetUserPassword")
 	}
 }
 
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *IUserServiceMock) MinimockFinish() {
 	if !m.minimockDone() {
-		m.MinimockCompleteUserObjectInspect()
+		m.MinimockSetUserPasswordInspect()
 		m.t.FailNow()
 	}
 }
@@ -281,5 +281,5 @@ func (m *IUserServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *IUserServiceMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockCompleteUserObjectDone()
+		m.MinimockSetUserPasswordDone()
 }

@@ -12,6 +12,7 @@ type User struct {
 	LastName       string    `db:"last_name" json:"last_name"`
 	Email          string    `db:"email" json:"email"`
 	Phone          string    `db:"phone" json:"phone"`
+	Region         string    `db:"region" json:"region"`
 	HashedPassword string    `db:"hashed_password"`
 	PasswordSalt   string    `db:"password_salt"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
@@ -19,14 +20,14 @@ type User struct {
 }
 
 type UserService struct {
-	repo UserRepository
+	Repo UserRepository
 }
 
 type IUserService interface {
-	CompleteUserObject(user User, password string) (User, error)
+	SetUserPassword(user User, password string) (User, error)
 }
 
-func (s UserService) CompleteUserObject(user User, password string) (User, error) {
+func (s UserService) SetUserPassword(user User, password string) (User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return user, err

@@ -24,6 +24,12 @@ type IUserRepositoryMock struct {
 	beforeCreateUserCounter uint64
 	CreateUserMock          mIUserRepositoryMockCreateUser
 
+	funcGetUserByID          func(ctx context.Context, username string) (u1 mm_user.User, err error)
+	inspectFuncGetUserByID   func(ctx context.Context, username string)
+	afterGetUserByIDCounter  uint64
+	beforeGetUserByIDCounter uint64
+	GetUserByIDMock          mIUserRepositoryMockGetUserByID
+
 	funcGetUserByUsername          func(ctx context.Context, username string) (u1 mm_user.User, err error)
 	inspectFuncGetUserByUsername   func(ctx context.Context, username string)
 	afterGetUserByUsernameCounter  uint64
@@ -40,6 +46,9 @@ func NewIUserRepositoryMock(t minimock.Tester) *IUserRepositoryMock {
 
 	m.CreateUserMock = mIUserRepositoryMockCreateUser{mock: m}
 	m.CreateUserMock.callArgs = []*IUserRepositoryMockCreateUserParams{}
+
+	m.GetUserByIDMock = mIUserRepositoryMockGetUserByID{mock: m}
+	m.GetUserByIDMock.callArgs = []*IUserRepositoryMockGetUserByIDParams{}
 
 	m.GetUserByUsernameMock = mIUserRepositoryMockGetUserByUsername{mock: m}
 	m.GetUserByUsernameMock.callArgs = []*IUserRepositoryMockGetUserByUsernameParams{}
@@ -261,6 +270,223 @@ func (m *IUserRepositoryMock) MinimockCreateUserInspect() {
 	// if func was set then invocations count should be greater than zero
 	if m.funcCreateUser != nil && mm_atomic.LoadUint64(&m.afterCreateUserCounter) < 1 {
 		m.t.Error("Expected call to IUserRepositoryMock.CreateUser")
+	}
+}
+
+type mIUserRepositoryMockGetUserByID struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockGetUserByIDExpectation
+	expectations       []*IUserRepositoryMockGetUserByIDExpectation
+
+	callArgs []*IUserRepositoryMockGetUserByIDParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockGetUserByIDExpectation specifies expectation struct of the IUserRepository.GetUserByID
+type IUserRepositoryMockGetUserByIDExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockGetUserByIDParams
+	results *IUserRepositoryMockGetUserByIDResults
+	Counter uint64
+}
+
+// IUserRepositoryMockGetUserByIDParams contains parameters of the IUserRepository.GetUserByID
+type IUserRepositoryMockGetUserByIDParams struct {
+	ctx      context.Context
+	username string
+}
+
+// IUserRepositoryMockGetUserByIDResults contains results of the IUserRepository.GetUserByID
+type IUserRepositoryMockGetUserByIDResults struct {
+	u1  mm_user.User
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.GetUserByID
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) Expect(ctx context.Context, username string) *mIUserRepositoryMockGetUserByID {
+	if mmGetUserByID.mock.funcGetUserByID != nil {
+		mmGetUserByID.mock.t.Fatalf("IUserRepositoryMock.GetUserByID mock is already set by Set")
+	}
+
+	if mmGetUserByID.defaultExpectation == nil {
+		mmGetUserByID.defaultExpectation = &IUserRepositoryMockGetUserByIDExpectation{}
+	}
+
+	mmGetUserByID.defaultExpectation.params = &IUserRepositoryMockGetUserByIDParams{ctx, username}
+	for _, e := range mmGetUserByID.expectations {
+		if minimock.Equal(e.params, mmGetUserByID.defaultExpectation.params) {
+			mmGetUserByID.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUserByID.defaultExpectation.params)
+		}
+	}
+
+	return mmGetUserByID
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.GetUserByID
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) Inspect(f func(ctx context.Context, username string)) *mIUserRepositoryMockGetUserByID {
+	if mmGetUserByID.mock.inspectFuncGetUserByID != nil {
+		mmGetUserByID.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.GetUserByID")
+	}
+
+	mmGetUserByID.mock.inspectFuncGetUserByID = f
+
+	return mmGetUserByID
+}
+
+// Return sets up results that will be returned by IUserRepository.GetUserByID
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) Return(u1 mm_user.User, err error) *IUserRepositoryMock {
+	if mmGetUserByID.mock.funcGetUserByID != nil {
+		mmGetUserByID.mock.t.Fatalf("IUserRepositoryMock.GetUserByID mock is already set by Set")
+	}
+
+	if mmGetUserByID.defaultExpectation == nil {
+		mmGetUserByID.defaultExpectation = &IUserRepositoryMockGetUserByIDExpectation{mock: mmGetUserByID.mock}
+	}
+	mmGetUserByID.defaultExpectation.results = &IUserRepositoryMockGetUserByIDResults{u1, err}
+	return mmGetUserByID.mock
+}
+
+//Set uses given function f to mock the IUserRepository.GetUserByID method
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) Set(f func(ctx context.Context, username string) (u1 mm_user.User, err error)) *IUserRepositoryMock {
+	if mmGetUserByID.defaultExpectation != nil {
+		mmGetUserByID.mock.t.Fatalf("Default expectation is already set for the IUserRepository.GetUserByID method")
+	}
+
+	if len(mmGetUserByID.expectations) > 0 {
+		mmGetUserByID.mock.t.Fatalf("Some expectations are already set for the IUserRepository.GetUserByID method")
+	}
+
+	mmGetUserByID.mock.funcGetUserByID = f
+	return mmGetUserByID.mock
+}
+
+// When sets expectation for the IUserRepository.GetUserByID which will trigger the result defined by the following
+// Then helper
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) When(ctx context.Context, username string) *IUserRepositoryMockGetUserByIDExpectation {
+	if mmGetUserByID.mock.funcGetUserByID != nil {
+		mmGetUserByID.mock.t.Fatalf("IUserRepositoryMock.GetUserByID mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockGetUserByIDExpectation{
+		mock:   mmGetUserByID.mock,
+		params: &IUserRepositoryMockGetUserByIDParams{ctx, username},
+	}
+	mmGetUserByID.expectations = append(mmGetUserByID.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.GetUserByID return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockGetUserByIDExpectation) Then(u1 mm_user.User, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockGetUserByIDResults{u1, err}
+	return e.mock
+}
+
+// GetUserByID implements user.IUserRepository
+func (mmGetUserByID *IUserRepositoryMock) GetUserByID(ctx context.Context, username string) (u1 mm_user.User, err error) {
+	mm_atomic.AddUint64(&mmGetUserByID.beforeGetUserByIDCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetUserByID.afterGetUserByIDCounter, 1)
+
+	if mmGetUserByID.inspectFuncGetUserByID != nil {
+		mmGetUserByID.inspectFuncGetUserByID(ctx, username)
+	}
+
+	mm_params := &IUserRepositoryMockGetUserByIDParams{ctx, username}
+
+	// Record call args
+	mmGetUserByID.GetUserByIDMock.mutex.Lock()
+	mmGetUserByID.GetUserByIDMock.callArgs = append(mmGetUserByID.GetUserByIDMock.callArgs, mm_params)
+	mmGetUserByID.GetUserByIDMock.mutex.Unlock()
+
+	for _, e := range mmGetUserByID.GetUserByIDMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.u1, e.results.err
+		}
+	}
+
+	if mmGetUserByID.GetUserByIDMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetUserByID.GetUserByIDMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetUserByID.GetUserByIDMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockGetUserByIDParams{ctx, username}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetUserByID.t.Errorf("IUserRepositoryMock.GetUserByID got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetUserByID.GetUserByIDMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetUserByID.t.Fatal("No results are set for the IUserRepositoryMock.GetUserByID")
+		}
+		return (*mm_results).u1, (*mm_results).err
+	}
+	if mmGetUserByID.funcGetUserByID != nil {
+		return mmGetUserByID.funcGetUserByID(ctx, username)
+	}
+	mmGetUserByID.t.Fatalf("Unexpected call to IUserRepositoryMock.GetUserByID. %v %v", ctx, username)
+	return
+}
+
+// GetUserByIDAfterCounter returns a count of finished IUserRepositoryMock.GetUserByID invocations
+func (mmGetUserByID *IUserRepositoryMock) GetUserByIDAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByID.afterGetUserByIDCounter)
+}
+
+// GetUserByIDBeforeCounter returns a count of IUserRepositoryMock.GetUserByID invocations
+func (mmGetUserByID *IUserRepositoryMock) GetUserByIDBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByID.beforeGetUserByIDCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.GetUserByID.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetUserByID *mIUserRepositoryMockGetUserByID) Calls() []*IUserRepositoryMockGetUserByIDParams {
+	mmGetUserByID.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockGetUserByIDParams, len(mmGetUserByID.callArgs))
+	copy(argCopy, mmGetUserByID.callArgs)
+
+	mmGetUserByID.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetUserByIDDone returns true if the count of the GetUserByID invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockGetUserByIDDone() bool {
+	for _, e := range m.GetUserByIDMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUserByIDMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetUserByIDCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUserByID != nil && mm_atomic.LoadUint64(&m.afterGetUserByIDCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetUserByIDInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockGetUserByIDInspect() {
+	for _, e := range m.GetUserByIDMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetUserByID with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUserByIDMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetUserByIDCounter) < 1 {
+		if m.GetUserByIDMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.GetUserByID")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetUserByID with params: %#v", *m.GetUserByIDMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUserByID != nil && mm_atomic.LoadUint64(&m.afterGetUserByIDCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.GetUserByID")
 	}
 }
 
@@ -486,6 +712,8 @@ func (m *IUserRepositoryMock) MinimockFinish() {
 	if !m.minimockDone() {
 		m.MinimockCreateUserInspect()
 
+		m.MinimockGetUserByIDInspect()
+
 		m.MinimockGetUserByUsernameInspect()
 		m.t.FailNow()
 	}
@@ -511,5 +739,6 @@ func (m *IUserRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockCreateUserDone() &&
+		m.MinimockGetUserByIDDone() &&
 		m.MinimockGetUserByUsernameDone()
 }

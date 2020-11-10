@@ -12,7 +12,7 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 	conn, err := sql.Connect("postgres", "user=test dbname=arco_test sslmode=disable")
 	_, err = conn.Exec("delete from users;")
 	require.NoError(t, err)
-	repo := UserRepository{db: conn}
+	repo := UserRepository{DB: conn}
 
 	t.Run("Create and retrieve user", func(t *testing.T) {
 		user := User{

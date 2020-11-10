@@ -28,7 +28,7 @@ func (a UserAPI) HandleCreateUser(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 	ctx := context.Background()
-	newUser, err := a.UserService.CompleteUserObject(user.User{
+	newUser, err := a.UserService.SetUserPassword(user.User{
 		Username: cmd.Username,
 		Email: cmd.Email,
 		FirstName: cmd.FirstName,

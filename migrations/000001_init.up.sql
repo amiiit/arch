@@ -1,14 +1,35 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE users
 (
-    id              uuid not null unique default uuid_generate_v4(),
-    username        varchar unique,
-    first_name      varchar,
-    last_name       varchar,
-    email           varchar unique,
-    phone           varchar,
-    hashed_password varchar,
-    password_salt   varchar,
-    created_at      timestamp not null default current_timestamp,
-    last_updated    timestamp not null default current_timestamp
+    id              uuid      NOT NULL PRIMARY KEY UNIQUE DEFAULT uuid_generate_v4(),
+    username        VARCHAR UNIQUE,
+    first_name      VARCHAR,
+    last_name       VARCHAR,
+    email           VARCHAR UNIQUE,
+    phone           VARCHAR,
+    region          VARCHAR,
+    hashed_password VARCHAR,
+    password_salt   VARCHAR,
+    created_at      TIMESTAMP NOT NULL                    DEFAULT current_timestamp,
+    last_updated    TIMESTAMP NOT NULL                    DEFAULT current_timestamp
 );
+
+
+CREATE TABLE sessions
+(
+    id         uuid      NOT NULL PRIMARY KEY UNIQUE DEFAULT uuid_generate_v4(),
+    user_id    uuid      NOT NULL REFERENCES users ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL                    DEFAULT current_timestamp,
+    token      varchar   NOT NULL UNIQUE,
+    is_valid   boolean   NOT NULL                    DEFAULT true
+);
+CREATE UNIQUE INDEX IF NOT EXISTS sessions_token ON sessions (token);
+
+CREATE TABLE roles
+(
+    id         uuid      NOT NULL PRIMARY KEY UNIQUE DEFAULT uuid_generate_v4(),
+    user_id    uuid      NOT NULL REFERENCES users ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL                    DEFAULT current_timestamp,
+    type       varchar   NOT NULL,
+    UNIQUE (user_id, type)
+)
