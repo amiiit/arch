@@ -3,30 +3,61 @@
 # https://gqlgen.com/getting-started/
 
 type User {
-  id: ID!
-  username: String!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phone: String
-  region: String
+    id: ID!
+    username: String!
+    firstName: String!
+    lastName: String!
+    email: String!
+    phone: String
+    region: String
+    roles: [Role!]
+    offers: [Offer!]
+}
+
+enum Role {
+    admin
+    user
+}
+directive @hasRole(role: Role!) on FIELD_DEFINITION
+
+type Offer {
+    title: String!
+    description: String!
+}
+
+type Transaction {
+    sender: User!
+    receiver: User!
+    sentAt: Int!
+    status: TransactionStatus!
+}
+enum TransactionStatus {
+    accepted
+    failed
+    rejected
 }
 
 type Query {
-  me: User
-  users: User
+    me: User
+    users: [User!]
 }
 
 input UserInput {
-  username: String!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phone: String
-  region: String
+    username: String!
+    firstName: String!
+    lastName: String!
+    email: String!
+    phone: String
+    region: String
+}
+
+input SetRolesInput {
+    userId: ID!
+    roles:[String!]
 }
 
 type Mutation {
-  addUser(input: UserInput!): User!
-  editUser(userId: String!, input: UserInput!): User!
+    addUser(input: UserInput!): User! @hasRole(role: admin)
+    editUser(userId: String!, input: UserInput!): User! @hasRole(role: admin)
+    setUserRoles(input: SetRolesInput!): User! @hasRole(role: admin)
 }

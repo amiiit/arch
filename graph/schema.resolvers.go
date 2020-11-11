@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"gitlab.com/amiiit/arco/graph/generated"
 	"gitlab.com/amiiit/arco/graph/model"
 )
@@ -25,13 +26,16 @@ func (r *mutationResolver) EditUser(ctx context.Context, userID string, input mo
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) SetUserRoles(ctx context.Context, input model.SetRolesInput) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Users(ctx context.Context) (*model.User, error) {
-
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	return []*model.User{}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

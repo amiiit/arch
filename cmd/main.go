@@ -40,14 +40,24 @@ func main() {
 		UserRepository: userRepo,
 	}
 
+	graphConfig := generated.Config{
+		Resolvers:  &graphResolver,
+	}
+	directives := graph.Directives{}
+	directives.Apply(&graphConfig.Directives)
+
 	router := chi.NewRouter()
 	router.Use(auth.Middleware(authRepo, userRepo))
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graphResolver}))
+	srv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(
+			graphConfig,
+		),
+	)
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"gitlab.com/amiiit/arco/user"
 	"net/http"
 )
@@ -42,6 +43,7 @@ func Middleware(authRepo IAuthRepository, userRepo user.IUserRepository) func(ht
 				http.Error(w, "Error fetching roles", http.StatusInternalServerError)
 				return
 			}
+			fmt.Println("middleware roles", roles)
 			ctx = context.WithValue(ctx, RolesContextKey, roles)
 
 			// and call the next with our new context
