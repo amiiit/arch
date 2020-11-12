@@ -1,9 +1,8 @@
-package auth
+package user
 
 import (
 	"context"
 	"fmt"
-	"gitlab.com/amiiit/arco/user"
 	"net/http"
 )
 
@@ -12,7 +11,7 @@ const SessionContextKey = contextKey("session")
 const RolesContextKey = contextKey("roles")
 
 // Middleware decodes the share session cookie and packs the session into context
-func Middleware(authRepo IAuthRepository, userRepo user.IUserRepository) func(http.Handler) http.Handler {
+func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -24,7 +23,7 @@ func Middleware(authRepo IAuthRepository, userRepo user.IUserRepository) func(ht
 				return
 			}
 
-			session, err := authRepo.GetSession(ctx, token.Value)
+			session, err := userRepo.GetSession(ctx, token.Value)
 			if err != nil {
 				http.Error(w, "Invalid cookie", http.StatusForbidden)
 				return
@@ -38,7 +37,7 @@ func Middleware(authRepo IAuthRepository, userRepo user.IUserRepository) func(ht
 			}
 			ctx = context.WithValue(ctx, SessionContextKey, sessionUser)
 
-			roles, err := authRepo.GetRoles(ctx, session.UserID)
+			roles, err := userRepo.GetRoles(ctx, session.UserID)
 			if err != nil {
 				http.Error(w, "Error fetching roles", http.StatusInternalServerError)
 				return

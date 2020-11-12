@@ -1,6 +1,8 @@
 package user
 
 import (
+	"context"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -20,11 +22,13 @@ type User struct {
 }
 
 type UserService struct {
-	Repo UserRepository
+	Repo IUserRepository
 }
 
 type IUserService interface {
 	SetUserPassword(user User, password string) (User, error)
+	ValidatePassword(ctx context.Context, username string, password string) error
+	CreateSession(ctx context.Context, username string) (Session, error)
 }
 
 func (s UserService) SetUserPassword(user User, password string) (User, error) {
@@ -36,4 +40,27 @@ func (s UserService) SetUserPassword(user User, password string) (User, error) {
 	// todo: validation
 
 	return user, nil
+}
+
+func (s UserService) ValidatePassword(ctx context.Context, username string, password string) error {
+	user, err := s.Repo.GetUserByUsername(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed fetching user: %w", err)
+	}
+	if user.ID == "" {
+		return ErrUsernameNotFound
+	}
+	hashed, err := s.Repo.GetHashedPassword(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("failed getting hased password: %w", err)
+	}
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+}
+
+func (s UserService) CreateSession(ctx context.Context, username string) (Session, error) {
+	user, err := s.Repo.GetUserByUsername(ctx, username)
+	if err != nil {
+		return Session{}, fmt.Errorf("failed fetching user: %w", err)
+	}
+	return s.Repo.CreateSession(ctx, user.ID)
 }

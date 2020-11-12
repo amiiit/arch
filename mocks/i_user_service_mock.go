@@ -5,6 +5,7 @@ package mocks
 //go:generate minimock -i gitlab.com/amiiit/arco/user.IUserService -o ./i_user_service_mock.go
 
 import (
+	"context"
 	"sync"
 	mm_atomic "sync/atomic"
 	mm_time "time"
@@ -17,11 +18,23 @@ import (
 type IUserServiceMock struct {
 	t minimock.Tester
 
+	funcCreateSession          func(ctx context.Context, username string) (s1 mm_user.Session, err error)
+	inspectFuncCreateSession   func(ctx context.Context, username string)
+	afterCreateSessionCounter  uint64
+	beforeCreateSessionCounter uint64
+	CreateSessionMock          mIUserServiceMockCreateSession
+
 	funcSetUserPassword          func(user mm_user.User, password string) (u1 mm_user.User, err error)
 	inspectFuncSetUserPassword   func(user mm_user.User, password string)
 	afterSetUserPasswordCounter  uint64
 	beforeSetUserPasswordCounter uint64
 	SetUserPasswordMock          mIUserServiceMockSetUserPassword
+
+	funcValidatePassword          func(ctx context.Context, username string, password string) (err error)
+	inspectFuncValidatePassword   func(ctx context.Context, username string, password string)
+	afterValidatePasswordCounter  uint64
+	beforeValidatePasswordCounter uint64
+	ValidatePasswordMock          mIUserServiceMockValidatePassword
 }
 
 // NewIUserServiceMock returns a mock for user.IUserService
@@ -31,10 +44,233 @@ func NewIUserServiceMock(t minimock.Tester) *IUserServiceMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.CreateSessionMock = mIUserServiceMockCreateSession{mock: m}
+	m.CreateSessionMock.callArgs = []*IUserServiceMockCreateSessionParams{}
+
 	m.SetUserPasswordMock = mIUserServiceMockSetUserPassword{mock: m}
 	m.SetUserPasswordMock.callArgs = []*IUserServiceMockSetUserPasswordParams{}
 
+	m.ValidatePasswordMock = mIUserServiceMockValidatePassword{mock: m}
+	m.ValidatePasswordMock.callArgs = []*IUserServiceMockValidatePasswordParams{}
+
 	return m
+}
+
+type mIUserServiceMockCreateSession struct {
+	mock               *IUserServiceMock
+	defaultExpectation *IUserServiceMockCreateSessionExpectation
+	expectations       []*IUserServiceMockCreateSessionExpectation
+
+	callArgs []*IUserServiceMockCreateSessionParams
+	mutex    sync.RWMutex
+}
+
+// IUserServiceMockCreateSessionExpectation specifies expectation struct of the IUserService.CreateSession
+type IUserServiceMockCreateSessionExpectation struct {
+	mock    *IUserServiceMock
+	params  *IUserServiceMockCreateSessionParams
+	results *IUserServiceMockCreateSessionResults
+	Counter uint64
+}
+
+// IUserServiceMockCreateSessionParams contains parameters of the IUserService.CreateSession
+type IUserServiceMockCreateSessionParams struct {
+	ctx      context.Context
+	username string
+}
+
+// IUserServiceMockCreateSessionResults contains results of the IUserService.CreateSession
+type IUserServiceMockCreateSessionResults struct {
+	s1  mm_user.Session
+	err error
+}
+
+// Expect sets up expected params for IUserService.CreateSession
+func (mmCreateSession *mIUserServiceMockCreateSession) Expect(ctx context.Context, username string) *mIUserServiceMockCreateSession {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserServiceMock.CreateSession mock is already set by Set")
+	}
+
+	if mmCreateSession.defaultExpectation == nil {
+		mmCreateSession.defaultExpectation = &IUserServiceMockCreateSessionExpectation{}
+	}
+
+	mmCreateSession.defaultExpectation.params = &IUserServiceMockCreateSessionParams{ctx, username}
+	for _, e := range mmCreateSession.expectations {
+		if minimock.Equal(e.params, mmCreateSession.defaultExpectation.params) {
+			mmCreateSession.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCreateSession.defaultExpectation.params)
+		}
+	}
+
+	return mmCreateSession
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserService.CreateSession
+func (mmCreateSession *mIUserServiceMockCreateSession) Inspect(f func(ctx context.Context, username string)) *mIUserServiceMockCreateSession {
+	if mmCreateSession.mock.inspectFuncCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("Inspect function is already set for IUserServiceMock.CreateSession")
+	}
+
+	mmCreateSession.mock.inspectFuncCreateSession = f
+
+	return mmCreateSession
+}
+
+// Return sets up results that will be returned by IUserService.CreateSession
+func (mmCreateSession *mIUserServiceMockCreateSession) Return(s1 mm_user.Session, err error) *IUserServiceMock {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserServiceMock.CreateSession mock is already set by Set")
+	}
+
+	if mmCreateSession.defaultExpectation == nil {
+		mmCreateSession.defaultExpectation = &IUserServiceMockCreateSessionExpectation{mock: mmCreateSession.mock}
+	}
+	mmCreateSession.defaultExpectation.results = &IUserServiceMockCreateSessionResults{s1, err}
+	return mmCreateSession.mock
+}
+
+//Set uses given function f to mock the IUserService.CreateSession method
+func (mmCreateSession *mIUserServiceMockCreateSession) Set(f func(ctx context.Context, username string) (s1 mm_user.Session, err error)) *IUserServiceMock {
+	if mmCreateSession.defaultExpectation != nil {
+		mmCreateSession.mock.t.Fatalf("Default expectation is already set for the IUserService.CreateSession method")
+	}
+
+	if len(mmCreateSession.expectations) > 0 {
+		mmCreateSession.mock.t.Fatalf("Some expectations are already set for the IUserService.CreateSession method")
+	}
+
+	mmCreateSession.mock.funcCreateSession = f
+	return mmCreateSession.mock
+}
+
+// When sets expectation for the IUserService.CreateSession which will trigger the result defined by the following
+// Then helper
+func (mmCreateSession *mIUserServiceMockCreateSession) When(ctx context.Context, username string) *IUserServiceMockCreateSessionExpectation {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserServiceMock.CreateSession mock is already set by Set")
+	}
+
+	expectation := &IUserServiceMockCreateSessionExpectation{
+		mock:   mmCreateSession.mock,
+		params: &IUserServiceMockCreateSessionParams{ctx, username},
+	}
+	mmCreateSession.expectations = append(mmCreateSession.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserService.CreateSession return parameters for the expectation previously defined by the When method
+func (e *IUserServiceMockCreateSessionExpectation) Then(s1 mm_user.Session, err error) *IUserServiceMock {
+	e.results = &IUserServiceMockCreateSessionResults{s1, err}
+	return e.mock
+}
+
+// CreateSession implements user.IUserService
+func (mmCreateSession *IUserServiceMock) CreateSession(ctx context.Context, username string) (s1 mm_user.Session, err error) {
+	mm_atomic.AddUint64(&mmCreateSession.beforeCreateSessionCounter, 1)
+	defer mm_atomic.AddUint64(&mmCreateSession.afterCreateSessionCounter, 1)
+
+	if mmCreateSession.inspectFuncCreateSession != nil {
+		mmCreateSession.inspectFuncCreateSession(ctx, username)
+	}
+
+	mm_params := &IUserServiceMockCreateSessionParams{ctx, username}
+
+	// Record call args
+	mmCreateSession.CreateSessionMock.mutex.Lock()
+	mmCreateSession.CreateSessionMock.callArgs = append(mmCreateSession.CreateSessionMock.callArgs, mm_params)
+	mmCreateSession.CreateSessionMock.mutex.Unlock()
+
+	for _, e := range mmCreateSession.CreateSessionMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmCreateSession.CreateSessionMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCreateSession.CreateSessionMock.defaultExpectation.Counter, 1)
+		mm_want := mmCreateSession.CreateSessionMock.defaultExpectation.params
+		mm_got := IUserServiceMockCreateSessionParams{ctx, username}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCreateSession.t.Errorf("IUserServiceMock.CreateSession got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCreateSession.CreateSessionMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCreateSession.t.Fatal("No results are set for the IUserServiceMock.CreateSession")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmCreateSession.funcCreateSession != nil {
+		return mmCreateSession.funcCreateSession(ctx, username)
+	}
+	mmCreateSession.t.Fatalf("Unexpected call to IUserServiceMock.CreateSession. %v %v", ctx, username)
+	return
+}
+
+// CreateSessionAfterCounter returns a count of finished IUserServiceMock.CreateSession invocations
+func (mmCreateSession *IUserServiceMock) CreateSessionAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateSession.afterCreateSessionCounter)
+}
+
+// CreateSessionBeforeCounter returns a count of IUserServiceMock.CreateSession invocations
+func (mmCreateSession *IUserServiceMock) CreateSessionBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateSession.beforeCreateSessionCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserServiceMock.CreateSession.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCreateSession *mIUserServiceMockCreateSession) Calls() []*IUserServiceMockCreateSessionParams {
+	mmCreateSession.mutex.RLock()
+
+	argCopy := make([]*IUserServiceMockCreateSessionParams, len(mmCreateSession.callArgs))
+	copy(argCopy, mmCreateSession.callArgs)
+
+	mmCreateSession.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCreateSessionDone returns true if the count of the CreateSession invocations corresponds
+// the number of defined expectations
+func (m *IUserServiceMock) MinimockCreateSessionDone() bool {
+	for _, e := range m.CreateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CreateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCreateSession != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockCreateSessionInspect logs each unmet expectation
+func (m *IUserServiceMock) MinimockCreateSessionInspect() {
+	for _, e := range m.CreateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserServiceMock.CreateSession with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CreateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		if m.CreateSessionMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserServiceMock.CreateSession")
+		} else {
+			m.t.Errorf("Expected call to IUserServiceMock.CreateSession with params: %#v", *m.CreateSessionMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCreateSession != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		m.t.Error("Expected call to IUserServiceMock.CreateSession")
+	}
 }
 
 type mIUserServiceMockSetUserPassword struct {
@@ -254,10 +490,231 @@ func (m *IUserServiceMock) MinimockSetUserPasswordInspect() {
 	}
 }
 
+type mIUserServiceMockValidatePassword struct {
+	mock               *IUserServiceMock
+	defaultExpectation *IUserServiceMockValidatePasswordExpectation
+	expectations       []*IUserServiceMockValidatePasswordExpectation
+
+	callArgs []*IUserServiceMockValidatePasswordParams
+	mutex    sync.RWMutex
+}
+
+// IUserServiceMockValidatePasswordExpectation specifies expectation struct of the IUserService.ValidatePassword
+type IUserServiceMockValidatePasswordExpectation struct {
+	mock    *IUserServiceMock
+	params  *IUserServiceMockValidatePasswordParams
+	results *IUserServiceMockValidatePasswordResults
+	Counter uint64
+}
+
+// IUserServiceMockValidatePasswordParams contains parameters of the IUserService.ValidatePassword
+type IUserServiceMockValidatePasswordParams struct {
+	ctx      context.Context
+	username string
+	password string
+}
+
+// IUserServiceMockValidatePasswordResults contains results of the IUserService.ValidatePassword
+type IUserServiceMockValidatePasswordResults struct {
+	err error
+}
+
+// Expect sets up expected params for IUserService.ValidatePassword
+func (mmValidatePassword *mIUserServiceMockValidatePassword) Expect(ctx context.Context, username string, password string) *mIUserServiceMockValidatePassword {
+	if mmValidatePassword.mock.funcValidatePassword != nil {
+		mmValidatePassword.mock.t.Fatalf("IUserServiceMock.ValidatePassword mock is already set by Set")
+	}
+
+	if mmValidatePassword.defaultExpectation == nil {
+		mmValidatePassword.defaultExpectation = &IUserServiceMockValidatePasswordExpectation{}
+	}
+
+	mmValidatePassword.defaultExpectation.params = &IUserServiceMockValidatePasswordParams{ctx, username, password}
+	for _, e := range mmValidatePassword.expectations {
+		if minimock.Equal(e.params, mmValidatePassword.defaultExpectation.params) {
+			mmValidatePassword.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmValidatePassword.defaultExpectation.params)
+		}
+	}
+
+	return mmValidatePassword
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserService.ValidatePassword
+func (mmValidatePassword *mIUserServiceMockValidatePassword) Inspect(f func(ctx context.Context, username string, password string)) *mIUserServiceMockValidatePassword {
+	if mmValidatePassword.mock.inspectFuncValidatePassword != nil {
+		mmValidatePassword.mock.t.Fatalf("Inspect function is already set for IUserServiceMock.ValidatePassword")
+	}
+
+	mmValidatePassword.mock.inspectFuncValidatePassword = f
+
+	return mmValidatePassword
+}
+
+// Return sets up results that will be returned by IUserService.ValidatePassword
+func (mmValidatePassword *mIUserServiceMockValidatePassword) Return(err error) *IUserServiceMock {
+	if mmValidatePassword.mock.funcValidatePassword != nil {
+		mmValidatePassword.mock.t.Fatalf("IUserServiceMock.ValidatePassword mock is already set by Set")
+	}
+
+	if mmValidatePassword.defaultExpectation == nil {
+		mmValidatePassword.defaultExpectation = &IUserServiceMockValidatePasswordExpectation{mock: mmValidatePassword.mock}
+	}
+	mmValidatePassword.defaultExpectation.results = &IUserServiceMockValidatePasswordResults{err}
+	return mmValidatePassword.mock
+}
+
+//Set uses given function f to mock the IUserService.ValidatePassword method
+func (mmValidatePassword *mIUserServiceMockValidatePassword) Set(f func(ctx context.Context, username string, password string) (err error)) *IUserServiceMock {
+	if mmValidatePassword.defaultExpectation != nil {
+		mmValidatePassword.mock.t.Fatalf("Default expectation is already set for the IUserService.ValidatePassword method")
+	}
+
+	if len(mmValidatePassword.expectations) > 0 {
+		mmValidatePassword.mock.t.Fatalf("Some expectations are already set for the IUserService.ValidatePassword method")
+	}
+
+	mmValidatePassword.mock.funcValidatePassword = f
+	return mmValidatePassword.mock
+}
+
+// When sets expectation for the IUserService.ValidatePassword which will trigger the result defined by the following
+// Then helper
+func (mmValidatePassword *mIUserServiceMockValidatePassword) When(ctx context.Context, username string, password string) *IUserServiceMockValidatePasswordExpectation {
+	if mmValidatePassword.mock.funcValidatePassword != nil {
+		mmValidatePassword.mock.t.Fatalf("IUserServiceMock.ValidatePassword mock is already set by Set")
+	}
+
+	expectation := &IUserServiceMockValidatePasswordExpectation{
+		mock:   mmValidatePassword.mock,
+		params: &IUserServiceMockValidatePasswordParams{ctx, username, password},
+	}
+	mmValidatePassword.expectations = append(mmValidatePassword.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserService.ValidatePassword return parameters for the expectation previously defined by the When method
+func (e *IUserServiceMockValidatePasswordExpectation) Then(err error) *IUserServiceMock {
+	e.results = &IUserServiceMockValidatePasswordResults{err}
+	return e.mock
+}
+
+// ValidatePassword implements user.IUserService
+func (mmValidatePassword *IUserServiceMock) ValidatePassword(ctx context.Context, username string, password string) (err error) {
+	mm_atomic.AddUint64(&mmValidatePassword.beforeValidatePasswordCounter, 1)
+	defer mm_atomic.AddUint64(&mmValidatePassword.afterValidatePasswordCounter, 1)
+
+	if mmValidatePassword.inspectFuncValidatePassword != nil {
+		mmValidatePassword.inspectFuncValidatePassword(ctx, username, password)
+	}
+
+	mm_params := &IUserServiceMockValidatePasswordParams{ctx, username, password}
+
+	// Record call args
+	mmValidatePassword.ValidatePasswordMock.mutex.Lock()
+	mmValidatePassword.ValidatePasswordMock.callArgs = append(mmValidatePassword.ValidatePasswordMock.callArgs, mm_params)
+	mmValidatePassword.ValidatePasswordMock.mutex.Unlock()
+
+	for _, e := range mmValidatePassword.ValidatePasswordMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmValidatePassword.ValidatePasswordMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmValidatePassword.ValidatePasswordMock.defaultExpectation.Counter, 1)
+		mm_want := mmValidatePassword.ValidatePasswordMock.defaultExpectation.params
+		mm_got := IUserServiceMockValidatePasswordParams{ctx, username, password}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmValidatePassword.t.Errorf("IUserServiceMock.ValidatePassword got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmValidatePassword.ValidatePasswordMock.defaultExpectation.results
+		if mm_results == nil {
+			mmValidatePassword.t.Fatal("No results are set for the IUserServiceMock.ValidatePassword")
+		}
+		return (*mm_results).err
+	}
+	if mmValidatePassword.funcValidatePassword != nil {
+		return mmValidatePassword.funcValidatePassword(ctx, username, password)
+	}
+	mmValidatePassword.t.Fatalf("Unexpected call to IUserServiceMock.ValidatePassword. %v %v %v", ctx, username, password)
+	return
+}
+
+// ValidatePasswordAfterCounter returns a count of finished IUserServiceMock.ValidatePassword invocations
+func (mmValidatePassword *IUserServiceMock) ValidatePasswordAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmValidatePassword.afterValidatePasswordCounter)
+}
+
+// ValidatePasswordBeforeCounter returns a count of IUserServiceMock.ValidatePassword invocations
+func (mmValidatePassword *IUserServiceMock) ValidatePasswordBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmValidatePassword.beforeValidatePasswordCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserServiceMock.ValidatePassword.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmValidatePassword *mIUserServiceMockValidatePassword) Calls() []*IUserServiceMockValidatePasswordParams {
+	mmValidatePassword.mutex.RLock()
+
+	argCopy := make([]*IUserServiceMockValidatePasswordParams, len(mmValidatePassword.callArgs))
+	copy(argCopy, mmValidatePassword.callArgs)
+
+	mmValidatePassword.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockValidatePasswordDone returns true if the count of the ValidatePassword invocations corresponds
+// the number of defined expectations
+func (m *IUserServiceMock) MinimockValidatePasswordDone() bool {
+	for _, e := range m.ValidatePasswordMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ValidatePasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterValidatePasswordCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcValidatePassword != nil && mm_atomic.LoadUint64(&m.afterValidatePasswordCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockValidatePasswordInspect logs each unmet expectation
+func (m *IUserServiceMock) MinimockValidatePasswordInspect() {
+	for _, e := range m.ValidatePasswordMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserServiceMock.ValidatePassword with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ValidatePasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterValidatePasswordCounter) < 1 {
+		if m.ValidatePasswordMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserServiceMock.ValidatePassword")
+		} else {
+			m.t.Errorf("Expected call to IUserServiceMock.ValidatePassword with params: %#v", *m.ValidatePasswordMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcValidatePassword != nil && mm_atomic.LoadUint64(&m.afterValidatePasswordCounter) < 1 {
+		m.t.Error("Expected call to IUserServiceMock.ValidatePassword")
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *IUserServiceMock) MinimockFinish() {
 	if !m.minimockDone() {
+		m.MinimockCreateSessionInspect()
+
 		m.MinimockSetUserPasswordInspect()
+
+		m.MinimockValidatePasswordInspect()
 		m.t.FailNow()
 	}
 }
@@ -281,5 +738,7 @@ func (m *IUserServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *IUserServiceMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockSetUserPasswordDone()
+		m.MinimockCreateSessionDone() &&
+		m.MinimockSetUserPasswordDone() &&
+		m.MinimockValidatePasswordDone()
 }

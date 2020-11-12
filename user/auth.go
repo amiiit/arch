@@ -1,9 +1,9 @@
-package auth
+package user
 
 type Session struct {
 	ID        string `db:"id" json:"id"`
 	UserID    string `db:"user_id" json:"user_id"`
-	Token     string `db:"hash"`
+	Token     string `db:"token"`
 	CreatedAt string `db:"created_at" json:"created_at"`
 	IsValid   bool   `db:"is_valid" json:"is_valid"`
 }
@@ -21,3 +21,8 @@ type Role struct {
 type UserRoles struct {
 	Admin bool
 }
+
+type AuthService struct {
+	userRepo IUserRepository
+}
+

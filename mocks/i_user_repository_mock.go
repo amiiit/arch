@@ -18,11 +18,35 @@ import (
 type IUserRepositoryMock struct {
 	t minimock.Tester
 
+	funcCreateSession          func(ctx context.Context, userID string) (s1 mm_user.Session, err error)
+	inspectFuncCreateSession   func(ctx context.Context, userID string)
+	afterCreateSessionCounter  uint64
+	beforeCreateSessionCounter uint64
+	CreateSessionMock          mIUserRepositoryMockCreateSession
+
 	funcCreateUser          func(ctx context.Context, user mm_user.User) (u1 mm_user.User, err error)
 	inspectFuncCreateUser   func(ctx context.Context, user mm_user.User)
 	afterCreateUserCounter  uint64
 	beforeCreateUserCounter uint64
 	CreateUserMock          mIUserRepositoryMockCreateUser
+
+	funcGetHashedPassword          func(ctx context.Context, userID string) (s1 string, err error)
+	inspectFuncGetHashedPassword   func(ctx context.Context, userID string)
+	afterGetHashedPasswordCounter  uint64
+	beforeGetHashedPasswordCounter uint64
+	GetHashedPasswordMock          mIUserRepositoryMockGetHashedPassword
+
+	funcGetRoles          func(ctx context.Context, userID string) (u1 mm_user.UserRoles, err error)
+	inspectFuncGetRoles   func(ctx context.Context, userID string)
+	afterGetRolesCounter  uint64
+	beforeGetRolesCounter uint64
+	GetRolesMock          mIUserRepositoryMockGetRoles
+
+	funcGetSession          func(ctx context.Context, hash string) (s1 mm_user.Session, err error)
+	inspectFuncGetSession   func(ctx context.Context, hash string)
+	afterGetSessionCounter  uint64
+	beforeGetSessionCounter uint64
+	GetSessionMock          mIUserRepositoryMockGetSession
 
 	funcGetUserByID          func(ctx context.Context, username string) (u1 mm_user.User, err error)
 	inspectFuncGetUserByID   func(ctx context.Context, username string)
@@ -35,6 +59,12 @@ type IUserRepositoryMock struct {
 	afterGetUserByUsernameCounter  uint64
 	beforeGetUserByUsernameCounter uint64
 	GetUserByUsernameMock          mIUserRepositoryMockGetUserByUsername
+
+	funcInvalidateSession          func(ctx context.Context, sessionID string) (err error)
+	inspectFuncInvalidateSession   func(ctx context.Context, sessionID string)
+	afterInvalidateSessionCounter  uint64
+	beforeInvalidateSessionCounter uint64
+	InvalidateSessionMock          mIUserRepositoryMockInvalidateSession
 }
 
 // NewIUserRepositoryMock returns a mock for user.IUserRepository
@@ -44,8 +74,20 @@ func NewIUserRepositoryMock(t minimock.Tester) *IUserRepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.CreateSessionMock = mIUserRepositoryMockCreateSession{mock: m}
+	m.CreateSessionMock.callArgs = []*IUserRepositoryMockCreateSessionParams{}
+
 	m.CreateUserMock = mIUserRepositoryMockCreateUser{mock: m}
 	m.CreateUserMock.callArgs = []*IUserRepositoryMockCreateUserParams{}
+
+	m.GetHashedPasswordMock = mIUserRepositoryMockGetHashedPassword{mock: m}
+	m.GetHashedPasswordMock.callArgs = []*IUserRepositoryMockGetHashedPasswordParams{}
+
+	m.GetRolesMock = mIUserRepositoryMockGetRoles{mock: m}
+	m.GetRolesMock.callArgs = []*IUserRepositoryMockGetRolesParams{}
+
+	m.GetSessionMock = mIUserRepositoryMockGetSession{mock: m}
+	m.GetSessionMock.callArgs = []*IUserRepositoryMockGetSessionParams{}
 
 	m.GetUserByIDMock = mIUserRepositoryMockGetUserByID{mock: m}
 	m.GetUserByIDMock.callArgs = []*IUserRepositoryMockGetUserByIDParams{}
@@ -53,7 +95,227 @@ func NewIUserRepositoryMock(t minimock.Tester) *IUserRepositoryMock {
 	m.GetUserByUsernameMock = mIUserRepositoryMockGetUserByUsername{mock: m}
 	m.GetUserByUsernameMock.callArgs = []*IUserRepositoryMockGetUserByUsernameParams{}
 
+	m.InvalidateSessionMock = mIUserRepositoryMockInvalidateSession{mock: m}
+	m.InvalidateSessionMock.callArgs = []*IUserRepositoryMockInvalidateSessionParams{}
+
 	return m
+}
+
+type mIUserRepositoryMockCreateSession struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockCreateSessionExpectation
+	expectations       []*IUserRepositoryMockCreateSessionExpectation
+
+	callArgs []*IUserRepositoryMockCreateSessionParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockCreateSessionExpectation specifies expectation struct of the IUserRepository.CreateSession
+type IUserRepositoryMockCreateSessionExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockCreateSessionParams
+	results *IUserRepositoryMockCreateSessionResults
+	Counter uint64
+}
+
+// IUserRepositoryMockCreateSessionParams contains parameters of the IUserRepository.CreateSession
+type IUserRepositoryMockCreateSessionParams struct {
+	ctx    context.Context
+	userID string
+}
+
+// IUserRepositoryMockCreateSessionResults contains results of the IUserRepository.CreateSession
+type IUserRepositoryMockCreateSessionResults struct {
+	s1  mm_user.Session
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.CreateSession
+func (mmCreateSession *mIUserRepositoryMockCreateSession) Expect(ctx context.Context, userID string) *mIUserRepositoryMockCreateSession {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserRepositoryMock.CreateSession mock is already set by Set")
+	}
+
+	if mmCreateSession.defaultExpectation == nil {
+		mmCreateSession.defaultExpectation = &IUserRepositoryMockCreateSessionExpectation{}
+	}
+
+	mmCreateSession.defaultExpectation.params = &IUserRepositoryMockCreateSessionParams{ctx, userID}
+	for _, e := range mmCreateSession.expectations {
+		if minimock.Equal(e.params, mmCreateSession.defaultExpectation.params) {
+			mmCreateSession.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCreateSession.defaultExpectation.params)
+		}
+	}
+
+	return mmCreateSession
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.CreateSession
+func (mmCreateSession *mIUserRepositoryMockCreateSession) Inspect(f func(ctx context.Context, userID string)) *mIUserRepositoryMockCreateSession {
+	if mmCreateSession.mock.inspectFuncCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.CreateSession")
+	}
+
+	mmCreateSession.mock.inspectFuncCreateSession = f
+
+	return mmCreateSession
+}
+
+// Return sets up results that will be returned by IUserRepository.CreateSession
+func (mmCreateSession *mIUserRepositoryMockCreateSession) Return(s1 mm_user.Session, err error) *IUserRepositoryMock {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserRepositoryMock.CreateSession mock is already set by Set")
+	}
+
+	if mmCreateSession.defaultExpectation == nil {
+		mmCreateSession.defaultExpectation = &IUserRepositoryMockCreateSessionExpectation{mock: mmCreateSession.mock}
+	}
+	mmCreateSession.defaultExpectation.results = &IUserRepositoryMockCreateSessionResults{s1, err}
+	return mmCreateSession.mock
+}
+
+//Set uses given function f to mock the IUserRepository.CreateSession method
+func (mmCreateSession *mIUserRepositoryMockCreateSession) Set(f func(ctx context.Context, userID string) (s1 mm_user.Session, err error)) *IUserRepositoryMock {
+	if mmCreateSession.defaultExpectation != nil {
+		mmCreateSession.mock.t.Fatalf("Default expectation is already set for the IUserRepository.CreateSession method")
+	}
+
+	if len(mmCreateSession.expectations) > 0 {
+		mmCreateSession.mock.t.Fatalf("Some expectations are already set for the IUserRepository.CreateSession method")
+	}
+
+	mmCreateSession.mock.funcCreateSession = f
+	return mmCreateSession.mock
+}
+
+// When sets expectation for the IUserRepository.CreateSession which will trigger the result defined by the following
+// Then helper
+func (mmCreateSession *mIUserRepositoryMockCreateSession) When(ctx context.Context, userID string) *IUserRepositoryMockCreateSessionExpectation {
+	if mmCreateSession.mock.funcCreateSession != nil {
+		mmCreateSession.mock.t.Fatalf("IUserRepositoryMock.CreateSession mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockCreateSessionExpectation{
+		mock:   mmCreateSession.mock,
+		params: &IUserRepositoryMockCreateSessionParams{ctx, userID},
+	}
+	mmCreateSession.expectations = append(mmCreateSession.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.CreateSession return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockCreateSessionExpectation) Then(s1 mm_user.Session, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockCreateSessionResults{s1, err}
+	return e.mock
+}
+
+// CreateSession implements user.IUserRepository
+func (mmCreateSession *IUserRepositoryMock) CreateSession(ctx context.Context, userID string) (s1 mm_user.Session, err error) {
+	mm_atomic.AddUint64(&mmCreateSession.beforeCreateSessionCounter, 1)
+	defer mm_atomic.AddUint64(&mmCreateSession.afterCreateSessionCounter, 1)
+
+	if mmCreateSession.inspectFuncCreateSession != nil {
+		mmCreateSession.inspectFuncCreateSession(ctx, userID)
+	}
+
+	mm_params := &IUserRepositoryMockCreateSessionParams{ctx, userID}
+
+	// Record call args
+	mmCreateSession.CreateSessionMock.mutex.Lock()
+	mmCreateSession.CreateSessionMock.callArgs = append(mmCreateSession.CreateSessionMock.callArgs, mm_params)
+	mmCreateSession.CreateSessionMock.mutex.Unlock()
+
+	for _, e := range mmCreateSession.CreateSessionMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmCreateSession.CreateSessionMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCreateSession.CreateSessionMock.defaultExpectation.Counter, 1)
+		mm_want := mmCreateSession.CreateSessionMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockCreateSessionParams{ctx, userID}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCreateSession.t.Errorf("IUserRepositoryMock.CreateSession got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCreateSession.CreateSessionMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCreateSession.t.Fatal("No results are set for the IUserRepositoryMock.CreateSession")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmCreateSession.funcCreateSession != nil {
+		return mmCreateSession.funcCreateSession(ctx, userID)
+	}
+	mmCreateSession.t.Fatalf("Unexpected call to IUserRepositoryMock.CreateSession. %v %v", ctx, userID)
+	return
+}
+
+// CreateSessionAfterCounter returns a count of finished IUserRepositoryMock.CreateSession invocations
+func (mmCreateSession *IUserRepositoryMock) CreateSessionAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateSession.afterCreateSessionCounter)
+}
+
+// CreateSessionBeforeCounter returns a count of IUserRepositoryMock.CreateSession invocations
+func (mmCreateSession *IUserRepositoryMock) CreateSessionBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateSession.beforeCreateSessionCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.CreateSession.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCreateSession *mIUserRepositoryMockCreateSession) Calls() []*IUserRepositoryMockCreateSessionParams {
+	mmCreateSession.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockCreateSessionParams, len(mmCreateSession.callArgs))
+	copy(argCopy, mmCreateSession.callArgs)
+
+	mmCreateSession.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCreateSessionDone returns true if the count of the CreateSession invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockCreateSessionDone() bool {
+	for _, e := range m.CreateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CreateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCreateSession != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockCreateSessionInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockCreateSessionInspect() {
+	for _, e := range m.CreateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.CreateSession with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CreateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		if m.CreateSessionMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.CreateSession")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.CreateSession with params: %#v", *m.CreateSessionMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCreateSession != nil && mm_atomic.LoadUint64(&m.afterCreateSessionCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.CreateSession")
+	}
 }
 
 type mIUserRepositoryMockCreateUser struct {
@@ -270,6 +532,657 @@ func (m *IUserRepositoryMock) MinimockCreateUserInspect() {
 	// if func was set then invocations count should be greater than zero
 	if m.funcCreateUser != nil && mm_atomic.LoadUint64(&m.afterCreateUserCounter) < 1 {
 		m.t.Error("Expected call to IUserRepositoryMock.CreateUser")
+	}
+}
+
+type mIUserRepositoryMockGetHashedPassword struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockGetHashedPasswordExpectation
+	expectations       []*IUserRepositoryMockGetHashedPasswordExpectation
+
+	callArgs []*IUserRepositoryMockGetHashedPasswordParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockGetHashedPasswordExpectation specifies expectation struct of the IUserRepository.GetHashedPassword
+type IUserRepositoryMockGetHashedPasswordExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockGetHashedPasswordParams
+	results *IUserRepositoryMockGetHashedPasswordResults
+	Counter uint64
+}
+
+// IUserRepositoryMockGetHashedPasswordParams contains parameters of the IUserRepository.GetHashedPassword
+type IUserRepositoryMockGetHashedPasswordParams struct {
+	ctx    context.Context
+	userID string
+}
+
+// IUserRepositoryMockGetHashedPasswordResults contains results of the IUserRepository.GetHashedPassword
+type IUserRepositoryMockGetHashedPasswordResults struct {
+	s1  string
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.GetHashedPassword
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) Expect(ctx context.Context, userID string) *mIUserRepositoryMockGetHashedPassword {
+	if mmGetHashedPassword.mock.funcGetHashedPassword != nil {
+		mmGetHashedPassword.mock.t.Fatalf("IUserRepositoryMock.GetHashedPassword mock is already set by Set")
+	}
+
+	if mmGetHashedPassword.defaultExpectation == nil {
+		mmGetHashedPassword.defaultExpectation = &IUserRepositoryMockGetHashedPasswordExpectation{}
+	}
+
+	mmGetHashedPassword.defaultExpectation.params = &IUserRepositoryMockGetHashedPasswordParams{ctx, userID}
+	for _, e := range mmGetHashedPassword.expectations {
+		if minimock.Equal(e.params, mmGetHashedPassword.defaultExpectation.params) {
+			mmGetHashedPassword.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetHashedPassword.defaultExpectation.params)
+		}
+	}
+
+	return mmGetHashedPassword
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.GetHashedPassword
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) Inspect(f func(ctx context.Context, userID string)) *mIUserRepositoryMockGetHashedPassword {
+	if mmGetHashedPassword.mock.inspectFuncGetHashedPassword != nil {
+		mmGetHashedPassword.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.GetHashedPassword")
+	}
+
+	mmGetHashedPassword.mock.inspectFuncGetHashedPassword = f
+
+	return mmGetHashedPassword
+}
+
+// Return sets up results that will be returned by IUserRepository.GetHashedPassword
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) Return(s1 string, err error) *IUserRepositoryMock {
+	if mmGetHashedPassword.mock.funcGetHashedPassword != nil {
+		mmGetHashedPassword.mock.t.Fatalf("IUserRepositoryMock.GetHashedPassword mock is already set by Set")
+	}
+
+	if mmGetHashedPassword.defaultExpectation == nil {
+		mmGetHashedPassword.defaultExpectation = &IUserRepositoryMockGetHashedPasswordExpectation{mock: mmGetHashedPassword.mock}
+	}
+	mmGetHashedPassword.defaultExpectation.results = &IUserRepositoryMockGetHashedPasswordResults{s1, err}
+	return mmGetHashedPassword.mock
+}
+
+//Set uses given function f to mock the IUserRepository.GetHashedPassword method
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) Set(f func(ctx context.Context, userID string) (s1 string, err error)) *IUserRepositoryMock {
+	if mmGetHashedPassword.defaultExpectation != nil {
+		mmGetHashedPassword.mock.t.Fatalf("Default expectation is already set for the IUserRepository.GetHashedPassword method")
+	}
+
+	if len(mmGetHashedPassword.expectations) > 0 {
+		mmGetHashedPassword.mock.t.Fatalf("Some expectations are already set for the IUserRepository.GetHashedPassword method")
+	}
+
+	mmGetHashedPassword.mock.funcGetHashedPassword = f
+	return mmGetHashedPassword.mock
+}
+
+// When sets expectation for the IUserRepository.GetHashedPassword which will trigger the result defined by the following
+// Then helper
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) When(ctx context.Context, userID string) *IUserRepositoryMockGetHashedPasswordExpectation {
+	if mmGetHashedPassword.mock.funcGetHashedPassword != nil {
+		mmGetHashedPassword.mock.t.Fatalf("IUserRepositoryMock.GetHashedPassword mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockGetHashedPasswordExpectation{
+		mock:   mmGetHashedPassword.mock,
+		params: &IUserRepositoryMockGetHashedPasswordParams{ctx, userID},
+	}
+	mmGetHashedPassword.expectations = append(mmGetHashedPassword.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.GetHashedPassword return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockGetHashedPasswordExpectation) Then(s1 string, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockGetHashedPasswordResults{s1, err}
+	return e.mock
+}
+
+// GetHashedPassword implements user.IUserRepository
+func (mmGetHashedPassword *IUserRepositoryMock) GetHashedPassword(ctx context.Context, userID string) (s1 string, err error) {
+	mm_atomic.AddUint64(&mmGetHashedPassword.beforeGetHashedPasswordCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetHashedPassword.afterGetHashedPasswordCounter, 1)
+
+	if mmGetHashedPassword.inspectFuncGetHashedPassword != nil {
+		mmGetHashedPassword.inspectFuncGetHashedPassword(ctx, userID)
+	}
+
+	mm_params := &IUserRepositoryMockGetHashedPasswordParams{ctx, userID}
+
+	// Record call args
+	mmGetHashedPassword.GetHashedPasswordMock.mutex.Lock()
+	mmGetHashedPassword.GetHashedPasswordMock.callArgs = append(mmGetHashedPassword.GetHashedPasswordMock.callArgs, mm_params)
+	mmGetHashedPassword.GetHashedPasswordMock.mutex.Unlock()
+
+	for _, e := range mmGetHashedPassword.GetHashedPasswordMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmGetHashedPassword.GetHashedPasswordMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetHashedPassword.GetHashedPasswordMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetHashedPassword.GetHashedPasswordMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockGetHashedPasswordParams{ctx, userID}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetHashedPassword.t.Errorf("IUserRepositoryMock.GetHashedPassword got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetHashedPassword.GetHashedPasswordMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetHashedPassword.t.Fatal("No results are set for the IUserRepositoryMock.GetHashedPassword")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmGetHashedPassword.funcGetHashedPassword != nil {
+		return mmGetHashedPassword.funcGetHashedPassword(ctx, userID)
+	}
+	mmGetHashedPassword.t.Fatalf("Unexpected call to IUserRepositoryMock.GetHashedPassword. %v %v", ctx, userID)
+	return
+}
+
+// GetHashedPasswordAfterCounter returns a count of finished IUserRepositoryMock.GetHashedPassword invocations
+func (mmGetHashedPassword *IUserRepositoryMock) GetHashedPasswordAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetHashedPassword.afterGetHashedPasswordCounter)
+}
+
+// GetHashedPasswordBeforeCounter returns a count of IUserRepositoryMock.GetHashedPassword invocations
+func (mmGetHashedPassword *IUserRepositoryMock) GetHashedPasswordBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetHashedPassword.beforeGetHashedPasswordCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.GetHashedPassword.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetHashedPassword *mIUserRepositoryMockGetHashedPassword) Calls() []*IUserRepositoryMockGetHashedPasswordParams {
+	mmGetHashedPassword.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockGetHashedPasswordParams, len(mmGetHashedPassword.callArgs))
+	copy(argCopy, mmGetHashedPassword.callArgs)
+
+	mmGetHashedPassword.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetHashedPasswordDone returns true if the count of the GetHashedPassword invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockGetHashedPasswordDone() bool {
+	for _, e := range m.GetHashedPasswordMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetHashedPasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetHashedPasswordCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetHashedPassword != nil && mm_atomic.LoadUint64(&m.afterGetHashedPasswordCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetHashedPasswordInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockGetHashedPasswordInspect() {
+	for _, e := range m.GetHashedPasswordMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetHashedPassword with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetHashedPasswordMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetHashedPasswordCounter) < 1 {
+		if m.GetHashedPasswordMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.GetHashedPassword")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetHashedPassword with params: %#v", *m.GetHashedPasswordMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetHashedPassword != nil && mm_atomic.LoadUint64(&m.afterGetHashedPasswordCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.GetHashedPassword")
+	}
+}
+
+type mIUserRepositoryMockGetRoles struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockGetRolesExpectation
+	expectations       []*IUserRepositoryMockGetRolesExpectation
+
+	callArgs []*IUserRepositoryMockGetRolesParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockGetRolesExpectation specifies expectation struct of the IUserRepository.GetRoles
+type IUserRepositoryMockGetRolesExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockGetRolesParams
+	results *IUserRepositoryMockGetRolesResults
+	Counter uint64
+}
+
+// IUserRepositoryMockGetRolesParams contains parameters of the IUserRepository.GetRoles
+type IUserRepositoryMockGetRolesParams struct {
+	ctx    context.Context
+	userID string
+}
+
+// IUserRepositoryMockGetRolesResults contains results of the IUserRepository.GetRoles
+type IUserRepositoryMockGetRolesResults struct {
+	u1  mm_user.UserRoles
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.GetRoles
+func (mmGetRoles *mIUserRepositoryMockGetRoles) Expect(ctx context.Context, userID string) *mIUserRepositoryMockGetRoles {
+	if mmGetRoles.mock.funcGetRoles != nil {
+		mmGetRoles.mock.t.Fatalf("IUserRepositoryMock.GetRoles mock is already set by Set")
+	}
+
+	if mmGetRoles.defaultExpectation == nil {
+		mmGetRoles.defaultExpectation = &IUserRepositoryMockGetRolesExpectation{}
+	}
+
+	mmGetRoles.defaultExpectation.params = &IUserRepositoryMockGetRolesParams{ctx, userID}
+	for _, e := range mmGetRoles.expectations {
+		if minimock.Equal(e.params, mmGetRoles.defaultExpectation.params) {
+			mmGetRoles.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetRoles.defaultExpectation.params)
+		}
+	}
+
+	return mmGetRoles
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.GetRoles
+func (mmGetRoles *mIUserRepositoryMockGetRoles) Inspect(f func(ctx context.Context, userID string)) *mIUserRepositoryMockGetRoles {
+	if mmGetRoles.mock.inspectFuncGetRoles != nil {
+		mmGetRoles.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.GetRoles")
+	}
+
+	mmGetRoles.mock.inspectFuncGetRoles = f
+
+	return mmGetRoles
+}
+
+// Return sets up results that will be returned by IUserRepository.GetRoles
+func (mmGetRoles *mIUserRepositoryMockGetRoles) Return(u1 mm_user.UserRoles, err error) *IUserRepositoryMock {
+	if mmGetRoles.mock.funcGetRoles != nil {
+		mmGetRoles.mock.t.Fatalf("IUserRepositoryMock.GetRoles mock is already set by Set")
+	}
+
+	if mmGetRoles.defaultExpectation == nil {
+		mmGetRoles.defaultExpectation = &IUserRepositoryMockGetRolesExpectation{mock: mmGetRoles.mock}
+	}
+	mmGetRoles.defaultExpectation.results = &IUserRepositoryMockGetRolesResults{u1, err}
+	return mmGetRoles.mock
+}
+
+//Set uses given function f to mock the IUserRepository.GetRoles method
+func (mmGetRoles *mIUserRepositoryMockGetRoles) Set(f func(ctx context.Context, userID string) (u1 mm_user.UserRoles, err error)) *IUserRepositoryMock {
+	if mmGetRoles.defaultExpectation != nil {
+		mmGetRoles.mock.t.Fatalf("Default expectation is already set for the IUserRepository.GetRoles method")
+	}
+
+	if len(mmGetRoles.expectations) > 0 {
+		mmGetRoles.mock.t.Fatalf("Some expectations are already set for the IUserRepository.GetRoles method")
+	}
+
+	mmGetRoles.mock.funcGetRoles = f
+	return mmGetRoles.mock
+}
+
+// When sets expectation for the IUserRepository.GetRoles which will trigger the result defined by the following
+// Then helper
+func (mmGetRoles *mIUserRepositoryMockGetRoles) When(ctx context.Context, userID string) *IUserRepositoryMockGetRolesExpectation {
+	if mmGetRoles.mock.funcGetRoles != nil {
+		mmGetRoles.mock.t.Fatalf("IUserRepositoryMock.GetRoles mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockGetRolesExpectation{
+		mock:   mmGetRoles.mock,
+		params: &IUserRepositoryMockGetRolesParams{ctx, userID},
+	}
+	mmGetRoles.expectations = append(mmGetRoles.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.GetRoles return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockGetRolesExpectation) Then(u1 mm_user.UserRoles, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockGetRolesResults{u1, err}
+	return e.mock
+}
+
+// GetRoles implements user.IUserRepository
+func (mmGetRoles *IUserRepositoryMock) GetRoles(ctx context.Context, userID string) (u1 mm_user.UserRoles, err error) {
+	mm_atomic.AddUint64(&mmGetRoles.beforeGetRolesCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetRoles.afterGetRolesCounter, 1)
+
+	if mmGetRoles.inspectFuncGetRoles != nil {
+		mmGetRoles.inspectFuncGetRoles(ctx, userID)
+	}
+
+	mm_params := &IUserRepositoryMockGetRolesParams{ctx, userID}
+
+	// Record call args
+	mmGetRoles.GetRolesMock.mutex.Lock()
+	mmGetRoles.GetRolesMock.callArgs = append(mmGetRoles.GetRolesMock.callArgs, mm_params)
+	mmGetRoles.GetRolesMock.mutex.Unlock()
+
+	for _, e := range mmGetRoles.GetRolesMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.u1, e.results.err
+		}
+	}
+
+	if mmGetRoles.GetRolesMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetRoles.GetRolesMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetRoles.GetRolesMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockGetRolesParams{ctx, userID}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetRoles.t.Errorf("IUserRepositoryMock.GetRoles got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetRoles.GetRolesMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetRoles.t.Fatal("No results are set for the IUserRepositoryMock.GetRoles")
+		}
+		return (*mm_results).u1, (*mm_results).err
+	}
+	if mmGetRoles.funcGetRoles != nil {
+		return mmGetRoles.funcGetRoles(ctx, userID)
+	}
+	mmGetRoles.t.Fatalf("Unexpected call to IUserRepositoryMock.GetRoles. %v %v", ctx, userID)
+	return
+}
+
+// GetRolesAfterCounter returns a count of finished IUserRepositoryMock.GetRoles invocations
+func (mmGetRoles *IUserRepositoryMock) GetRolesAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetRoles.afterGetRolesCounter)
+}
+
+// GetRolesBeforeCounter returns a count of IUserRepositoryMock.GetRoles invocations
+func (mmGetRoles *IUserRepositoryMock) GetRolesBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetRoles.beforeGetRolesCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.GetRoles.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetRoles *mIUserRepositoryMockGetRoles) Calls() []*IUserRepositoryMockGetRolesParams {
+	mmGetRoles.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockGetRolesParams, len(mmGetRoles.callArgs))
+	copy(argCopy, mmGetRoles.callArgs)
+
+	mmGetRoles.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetRolesDone returns true if the count of the GetRoles invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockGetRolesDone() bool {
+	for _, e := range m.GetRolesMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetRolesMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetRolesCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetRoles != nil && mm_atomic.LoadUint64(&m.afterGetRolesCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetRolesInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockGetRolesInspect() {
+	for _, e := range m.GetRolesMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetRoles with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetRolesMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetRolesCounter) < 1 {
+		if m.GetRolesMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.GetRoles")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetRoles with params: %#v", *m.GetRolesMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetRoles != nil && mm_atomic.LoadUint64(&m.afterGetRolesCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.GetRoles")
+	}
+}
+
+type mIUserRepositoryMockGetSession struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockGetSessionExpectation
+	expectations       []*IUserRepositoryMockGetSessionExpectation
+
+	callArgs []*IUserRepositoryMockGetSessionParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockGetSessionExpectation specifies expectation struct of the IUserRepository.GetSession
+type IUserRepositoryMockGetSessionExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockGetSessionParams
+	results *IUserRepositoryMockGetSessionResults
+	Counter uint64
+}
+
+// IUserRepositoryMockGetSessionParams contains parameters of the IUserRepository.GetSession
+type IUserRepositoryMockGetSessionParams struct {
+	ctx  context.Context
+	hash string
+}
+
+// IUserRepositoryMockGetSessionResults contains results of the IUserRepository.GetSession
+type IUserRepositoryMockGetSessionResults struct {
+	s1  mm_user.Session
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.GetSession
+func (mmGetSession *mIUserRepositoryMockGetSession) Expect(ctx context.Context, hash string) *mIUserRepositoryMockGetSession {
+	if mmGetSession.mock.funcGetSession != nil {
+		mmGetSession.mock.t.Fatalf("IUserRepositoryMock.GetSession mock is already set by Set")
+	}
+
+	if mmGetSession.defaultExpectation == nil {
+		mmGetSession.defaultExpectation = &IUserRepositoryMockGetSessionExpectation{}
+	}
+
+	mmGetSession.defaultExpectation.params = &IUserRepositoryMockGetSessionParams{ctx, hash}
+	for _, e := range mmGetSession.expectations {
+		if minimock.Equal(e.params, mmGetSession.defaultExpectation.params) {
+			mmGetSession.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetSession.defaultExpectation.params)
+		}
+	}
+
+	return mmGetSession
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.GetSession
+func (mmGetSession *mIUserRepositoryMockGetSession) Inspect(f func(ctx context.Context, hash string)) *mIUserRepositoryMockGetSession {
+	if mmGetSession.mock.inspectFuncGetSession != nil {
+		mmGetSession.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.GetSession")
+	}
+
+	mmGetSession.mock.inspectFuncGetSession = f
+
+	return mmGetSession
+}
+
+// Return sets up results that will be returned by IUserRepository.GetSession
+func (mmGetSession *mIUserRepositoryMockGetSession) Return(s1 mm_user.Session, err error) *IUserRepositoryMock {
+	if mmGetSession.mock.funcGetSession != nil {
+		mmGetSession.mock.t.Fatalf("IUserRepositoryMock.GetSession mock is already set by Set")
+	}
+
+	if mmGetSession.defaultExpectation == nil {
+		mmGetSession.defaultExpectation = &IUserRepositoryMockGetSessionExpectation{mock: mmGetSession.mock}
+	}
+	mmGetSession.defaultExpectation.results = &IUserRepositoryMockGetSessionResults{s1, err}
+	return mmGetSession.mock
+}
+
+//Set uses given function f to mock the IUserRepository.GetSession method
+func (mmGetSession *mIUserRepositoryMockGetSession) Set(f func(ctx context.Context, hash string) (s1 mm_user.Session, err error)) *IUserRepositoryMock {
+	if mmGetSession.defaultExpectation != nil {
+		mmGetSession.mock.t.Fatalf("Default expectation is already set for the IUserRepository.GetSession method")
+	}
+
+	if len(mmGetSession.expectations) > 0 {
+		mmGetSession.mock.t.Fatalf("Some expectations are already set for the IUserRepository.GetSession method")
+	}
+
+	mmGetSession.mock.funcGetSession = f
+	return mmGetSession.mock
+}
+
+// When sets expectation for the IUserRepository.GetSession which will trigger the result defined by the following
+// Then helper
+func (mmGetSession *mIUserRepositoryMockGetSession) When(ctx context.Context, hash string) *IUserRepositoryMockGetSessionExpectation {
+	if mmGetSession.mock.funcGetSession != nil {
+		mmGetSession.mock.t.Fatalf("IUserRepositoryMock.GetSession mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockGetSessionExpectation{
+		mock:   mmGetSession.mock,
+		params: &IUserRepositoryMockGetSessionParams{ctx, hash},
+	}
+	mmGetSession.expectations = append(mmGetSession.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.GetSession return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockGetSessionExpectation) Then(s1 mm_user.Session, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockGetSessionResults{s1, err}
+	return e.mock
+}
+
+// GetSession implements user.IUserRepository
+func (mmGetSession *IUserRepositoryMock) GetSession(ctx context.Context, hash string) (s1 mm_user.Session, err error) {
+	mm_atomic.AddUint64(&mmGetSession.beforeGetSessionCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetSession.afterGetSessionCounter, 1)
+
+	if mmGetSession.inspectFuncGetSession != nil {
+		mmGetSession.inspectFuncGetSession(ctx, hash)
+	}
+
+	mm_params := &IUserRepositoryMockGetSessionParams{ctx, hash}
+
+	// Record call args
+	mmGetSession.GetSessionMock.mutex.Lock()
+	mmGetSession.GetSessionMock.callArgs = append(mmGetSession.GetSessionMock.callArgs, mm_params)
+	mmGetSession.GetSessionMock.mutex.Unlock()
+
+	for _, e := range mmGetSession.GetSessionMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmGetSession.GetSessionMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetSession.GetSessionMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetSession.GetSessionMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockGetSessionParams{ctx, hash}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetSession.t.Errorf("IUserRepositoryMock.GetSession got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetSession.GetSessionMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetSession.t.Fatal("No results are set for the IUserRepositoryMock.GetSession")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmGetSession.funcGetSession != nil {
+		return mmGetSession.funcGetSession(ctx, hash)
+	}
+	mmGetSession.t.Fatalf("Unexpected call to IUserRepositoryMock.GetSession. %v %v", ctx, hash)
+	return
+}
+
+// GetSessionAfterCounter returns a count of finished IUserRepositoryMock.GetSession invocations
+func (mmGetSession *IUserRepositoryMock) GetSessionAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetSession.afterGetSessionCounter)
+}
+
+// GetSessionBeforeCounter returns a count of IUserRepositoryMock.GetSession invocations
+func (mmGetSession *IUserRepositoryMock) GetSessionBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetSession.beforeGetSessionCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.GetSession.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetSession *mIUserRepositoryMockGetSession) Calls() []*IUserRepositoryMockGetSessionParams {
+	mmGetSession.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockGetSessionParams, len(mmGetSession.callArgs))
+	copy(argCopy, mmGetSession.callArgs)
+
+	mmGetSession.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetSessionDone returns true if the count of the GetSession invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockGetSessionDone() bool {
+	for _, e := range m.GetSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetSessionCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetSession != nil && mm_atomic.LoadUint64(&m.afterGetSessionCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetSessionInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockGetSessionInspect() {
+	for _, e := range m.GetSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetSession with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetSessionCounter) < 1 {
+		if m.GetSessionMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.GetSession")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.GetSession with params: %#v", *m.GetSessionMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetSession != nil && mm_atomic.LoadUint64(&m.afterGetSessionCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.GetSession")
 	}
 }
 
@@ -707,14 +1620,240 @@ func (m *IUserRepositoryMock) MinimockGetUserByUsernameInspect() {
 	}
 }
 
+type mIUserRepositoryMockInvalidateSession struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockInvalidateSessionExpectation
+	expectations       []*IUserRepositoryMockInvalidateSessionExpectation
+
+	callArgs []*IUserRepositoryMockInvalidateSessionParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockInvalidateSessionExpectation specifies expectation struct of the IUserRepository.InvalidateSession
+type IUserRepositoryMockInvalidateSessionExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockInvalidateSessionParams
+	results *IUserRepositoryMockInvalidateSessionResults
+	Counter uint64
+}
+
+// IUserRepositoryMockInvalidateSessionParams contains parameters of the IUserRepository.InvalidateSession
+type IUserRepositoryMockInvalidateSessionParams struct {
+	ctx       context.Context
+	sessionID string
+}
+
+// IUserRepositoryMockInvalidateSessionResults contains results of the IUserRepository.InvalidateSession
+type IUserRepositoryMockInvalidateSessionResults struct {
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.InvalidateSession
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) Expect(ctx context.Context, sessionID string) *mIUserRepositoryMockInvalidateSession {
+	if mmInvalidateSession.mock.funcInvalidateSession != nil {
+		mmInvalidateSession.mock.t.Fatalf("IUserRepositoryMock.InvalidateSession mock is already set by Set")
+	}
+
+	if mmInvalidateSession.defaultExpectation == nil {
+		mmInvalidateSession.defaultExpectation = &IUserRepositoryMockInvalidateSessionExpectation{}
+	}
+
+	mmInvalidateSession.defaultExpectation.params = &IUserRepositoryMockInvalidateSessionParams{ctx, sessionID}
+	for _, e := range mmInvalidateSession.expectations {
+		if minimock.Equal(e.params, mmInvalidateSession.defaultExpectation.params) {
+			mmInvalidateSession.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmInvalidateSession.defaultExpectation.params)
+		}
+	}
+
+	return mmInvalidateSession
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.InvalidateSession
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) Inspect(f func(ctx context.Context, sessionID string)) *mIUserRepositoryMockInvalidateSession {
+	if mmInvalidateSession.mock.inspectFuncInvalidateSession != nil {
+		mmInvalidateSession.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.InvalidateSession")
+	}
+
+	mmInvalidateSession.mock.inspectFuncInvalidateSession = f
+
+	return mmInvalidateSession
+}
+
+// Return sets up results that will be returned by IUserRepository.InvalidateSession
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) Return(err error) *IUserRepositoryMock {
+	if mmInvalidateSession.mock.funcInvalidateSession != nil {
+		mmInvalidateSession.mock.t.Fatalf("IUserRepositoryMock.InvalidateSession mock is already set by Set")
+	}
+
+	if mmInvalidateSession.defaultExpectation == nil {
+		mmInvalidateSession.defaultExpectation = &IUserRepositoryMockInvalidateSessionExpectation{mock: mmInvalidateSession.mock}
+	}
+	mmInvalidateSession.defaultExpectation.results = &IUserRepositoryMockInvalidateSessionResults{err}
+	return mmInvalidateSession.mock
+}
+
+//Set uses given function f to mock the IUserRepository.InvalidateSession method
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) Set(f func(ctx context.Context, sessionID string) (err error)) *IUserRepositoryMock {
+	if mmInvalidateSession.defaultExpectation != nil {
+		mmInvalidateSession.mock.t.Fatalf("Default expectation is already set for the IUserRepository.InvalidateSession method")
+	}
+
+	if len(mmInvalidateSession.expectations) > 0 {
+		mmInvalidateSession.mock.t.Fatalf("Some expectations are already set for the IUserRepository.InvalidateSession method")
+	}
+
+	mmInvalidateSession.mock.funcInvalidateSession = f
+	return mmInvalidateSession.mock
+}
+
+// When sets expectation for the IUserRepository.InvalidateSession which will trigger the result defined by the following
+// Then helper
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) When(ctx context.Context, sessionID string) *IUserRepositoryMockInvalidateSessionExpectation {
+	if mmInvalidateSession.mock.funcInvalidateSession != nil {
+		mmInvalidateSession.mock.t.Fatalf("IUserRepositoryMock.InvalidateSession mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockInvalidateSessionExpectation{
+		mock:   mmInvalidateSession.mock,
+		params: &IUserRepositoryMockInvalidateSessionParams{ctx, sessionID},
+	}
+	mmInvalidateSession.expectations = append(mmInvalidateSession.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.InvalidateSession return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockInvalidateSessionExpectation) Then(err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockInvalidateSessionResults{err}
+	return e.mock
+}
+
+// InvalidateSession implements user.IUserRepository
+func (mmInvalidateSession *IUserRepositoryMock) InvalidateSession(ctx context.Context, sessionID string) (err error) {
+	mm_atomic.AddUint64(&mmInvalidateSession.beforeInvalidateSessionCounter, 1)
+	defer mm_atomic.AddUint64(&mmInvalidateSession.afterInvalidateSessionCounter, 1)
+
+	if mmInvalidateSession.inspectFuncInvalidateSession != nil {
+		mmInvalidateSession.inspectFuncInvalidateSession(ctx, sessionID)
+	}
+
+	mm_params := &IUserRepositoryMockInvalidateSessionParams{ctx, sessionID}
+
+	// Record call args
+	mmInvalidateSession.InvalidateSessionMock.mutex.Lock()
+	mmInvalidateSession.InvalidateSessionMock.callArgs = append(mmInvalidateSession.InvalidateSessionMock.callArgs, mm_params)
+	mmInvalidateSession.InvalidateSessionMock.mutex.Unlock()
+
+	for _, e := range mmInvalidateSession.InvalidateSessionMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmInvalidateSession.InvalidateSessionMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmInvalidateSession.InvalidateSessionMock.defaultExpectation.Counter, 1)
+		mm_want := mmInvalidateSession.InvalidateSessionMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockInvalidateSessionParams{ctx, sessionID}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmInvalidateSession.t.Errorf("IUserRepositoryMock.InvalidateSession got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmInvalidateSession.InvalidateSessionMock.defaultExpectation.results
+		if mm_results == nil {
+			mmInvalidateSession.t.Fatal("No results are set for the IUserRepositoryMock.InvalidateSession")
+		}
+		return (*mm_results).err
+	}
+	if mmInvalidateSession.funcInvalidateSession != nil {
+		return mmInvalidateSession.funcInvalidateSession(ctx, sessionID)
+	}
+	mmInvalidateSession.t.Fatalf("Unexpected call to IUserRepositoryMock.InvalidateSession. %v %v", ctx, sessionID)
+	return
+}
+
+// InvalidateSessionAfterCounter returns a count of finished IUserRepositoryMock.InvalidateSession invocations
+func (mmInvalidateSession *IUserRepositoryMock) InvalidateSessionAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmInvalidateSession.afterInvalidateSessionCounter)
+}
+
+// InvalidateSessionBeforeCounter returns a count of IUserRepositoryMock.InvalidateSession invocations
+func (mmInvalidateSession *IUserRepositoryMock) InvalidateSessionBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmInvalidateSession.beforeInvalidateSessionCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.InvalidateSession.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmInvalidateSession *mIUserRepositoryMockInvalidateSession) Calls() []*IUserRepositoryMockInvalidateSessionParams {
+	mmInvalidateSession.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockInvalidateSessionParams, len(mmInvalidateSession.callArgs))
+	copy(argCopy, mmInvalidateSession.callArgs)
+
+	mmInvalidateSession.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockInvalidateSessionDone returns true if the count of the InvalidateSession invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockInvalidateSessionDone() bool {
+	for _, e := range m.InvalidateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.InvalidateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterInvalidateSessionCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcInvalidateSession != nil && mm_atomic.LoadUint64(&m.afterInvalidateSessionCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockInvalidateSessionInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockInvalidateSessionInspect() {
+	for _, e := range m.InvalidateSessionMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.InvalidateSession with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.InvalidateSessionMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterInvalidateSessionCounter) < 1 {
+		if m.InvalidateSessionMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.InvalidateSession")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.InvalidateSession with params: %#v", *m.InvalidateSessionMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcInvalidateSession != nil && mm_atomic.LoadUint64(&m.afterInvalidateSessionCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.InvalidateSession")
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *IUserRepositoryMock) MinimockFinish() {
 	if !m.minimockDone() {
+		m.MinimockCreateSessionInspect()
+
 		m.MinimockCreateUserInspect()
+
+		m.MinimockGetHashedPasswordInspect()
+
+		m.MinimockGetRolesInspect()
+
+		m.MinimockGetSessionInspect()
 
 		m.MinimockGetUserByIDInspect()
 
 		m.MinimockGetUserByUsernameInspect()
+
+		m.MinimockInvalidateSessionInspect()
 		m.t.FailNow()
 	}
 }
@@ -738,7 +1877,12 @@ func (m *IUserRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *IUserRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockCreateSessionDone() &&
 		m.MinimockCreateUserDone() &&
+		m.MinimockGetHashedPasswordDone() &&
+		m.MinimockGetRolesDone() &&
+		m.MinimockGetSessionDone() &&
 		m.MinimockGetUserByIDDone() &&
-		m.MinimockGetUserByUsernameDone()
+		m.MinimockGetUserByUsernameDone() &&
+		m.MinimockInvalidateSessionDone()
 }

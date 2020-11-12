@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
-	"gitlab.com/amiiit/arco/auth"
 	"gitlab.com/amiiit/arco/graph/generated"
 	"gitlab.com/amiiit/arco/graph/model"
+	"gitlab.com/amiiit/arco/user"
 )
 
 type Directives struct {
@@ -17,11 +17,11 @@ func (d Directives) Apply(root *generated.DirectiveRoot) {
 }
 
 func (d Directives) HasRole(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
-	contextRoles := ctx.Value(auth.RolesContextKey)
+	contextRoles := ctx.Value(user.RolesContextKey)
 	if contextRoles == nil {
 		return nil, fmt.Errorf("Access denied, please log in.")
 	}
-	roles := contextRoles.(auth.UserRoles)
+	roles := contextRoles.(user.UserRoles)
 	allow := false
 
 	switch role {

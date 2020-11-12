@@ -3,7 +3,6 @@ package main
 import (
 	sql "github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"gitlab.com/amiiit/arco/auth"
 	"gitlab.com/amiiit/arco/user"
 	"log"
 	"net/http"
@@ -31,7 +30,6 @@ func main() {
 	userRepo := user.UserRepository{
 		DB: conn,
 	}
-	authRepo := auth.Repository{DB: conn}
 	userService := user.UserService{
 		Repo: userRepo,
 	}
@@ -41,13 +39,13 @@ func main() {
 	}
 
 	graphConfig := generated.Config{
-		Resolvers:  &graphResolver,
+		Resolvers: &graphResolver,
 	}
 	directives := graph.Directives{}
 	directives.Apply(&graphConfig.Directives)
 
 	router := chi.NewRouter()
-	router.Use(auth.Middleware(authRepo, userRepo))
+	router.Use(user.Middleware(userRepo))
 
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
@@ -55,8 +53,13 @@ func main() {
 		),
 	)
 
+	sessionHandler := user.SessionHandler{}
+
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
+	router.Route("/session", func(r chi.Router) {
+		r.Post("/", sessionHandler.CreateSession)
+	})
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
