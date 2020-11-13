@@ -57,7 +57,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Me    func(childComplexity int) int
-		User  func(childComplexity int, userID string) int
+		User  func(childComplexity int, id string) int
 		Users func(childComplexity int) int
 	}
 
@@ -89,7 +89,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
 	Users(ctx context.Context) ([]*model.User, error)
-	User(ctx context.Context, userID string) (*model.User, error)
+	User(ctx context.Context, id string) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -174,7 +174,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["userId"].(string)), true
+		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
 
 	case "Query.users":
 		if e.complexity.Query.Users == nil {
@@ -380,7 +380,7 @@ enum TransactionStatus {
 type Query {
     me: User
     users: [User!]
-    user(userId: ID!): User
+    user(id: ID!): User @hasRole(role: user)
 }
 
 input UserInput {
@@ -497,14 +497,14 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -902,8 +902,32 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["userId"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().User(rctx, args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐRole(ctx, "user")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

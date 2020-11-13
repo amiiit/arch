@@ -22,7 +22,6 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 			Email:          "test@user.net",
 			Phone:          "+123456789",
 			HashedPassword: "fbjslfuhew",
-			PasswordSalt:   "123",
 		}
 		ctx := context.Background()
 		_, err = repo.CreateUser(ctx, user)
@@ -42,7 +41,6 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 			Email:          "test@user1.net",
 			Phone:          "+123456789",
 			HashedPassword: "fbjslfuhew",
-			PasswordSalt:   "123",
 		}
 		ctx := context.Background()
 		pUser, err := repo.CreateUser(ctx, user)

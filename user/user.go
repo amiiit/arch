@@ -16,7 +16,6 @@ type User struct {
 	Phone          string    `db:"phone" json:"phone"`
 	Region         string    `db:"region" json:"region"`
 	HashedPassword string    `db:"hashed_password"`
-	PasswordSalt   string    `db:"password_salt"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
 	LastUpdated    time.Time `db:"last_updated" json:"last_updated"`
 }

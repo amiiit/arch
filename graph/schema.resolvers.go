@@ -42,8 +42,13 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return []*model.User{}, nil
 }
 
-func (r *queryResolver) User(ctx context.Context, userID string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+	user, err := r.UserRepository.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	result := model.FromUser(user)
+	return &result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

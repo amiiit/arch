@@ -9,7 +9,6 @@ CREATE TABLE users
     phone           VARCHAR,
     region          VARCHAR,
     hashed_password VARCHAR,
-    password_salt   VARCHAR,
     created_at      TIMESTAMP NOT NULL                    DEFAULT current_timestamp,
     last_updated    TIMESTAMP NOT NULL                    DEFAULT current_timestamp
 );

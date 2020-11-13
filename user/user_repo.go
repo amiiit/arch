@@ -40,8 +40,8 @@ type IUserRepository interface {
 	GetHashedPassword(ctx context.Context, userID string) (string, error)
 }
 
-const USER_FIELDS_NO_ID = `username, first_name, last_name, email, phone, region, hashed_password, password_salt`
-const USER_NAMED_FIELDS_NO_ID = `:username, :first_name, :last_name, :email, :phone, :region, :hashed_password, :password_salt`
+const USER_FIELDS_NO_ID = `username, first_name, last_name, email, phone, region, hashed_password`
+const USER_NAMED_FIELDS_NO_ID = `:username, :first_name, :last_name, :email, :phone, :region, :hashed_password`
 
 func (rep UserRepository) CreateUser(ctx context.Context, user User) (User, error) {
 	_, err := rep.DB.NamedExecContext(ctx, fmt.Sprintf(`

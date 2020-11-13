@@ -40,7 +40,7 @@ enum TransactionStatus {
 type Query {
     me: User
     users: [User!]
-    user(userId: ID!): User
+    user(id: ID!): User @hasRole(role: user)
 }
 
 input UserInput {
