@@ -23,7 +23,11 @@ func (r *mutationResolver) AddUser(ctx context.Context, input model.UserInput) (
 }
 
 func (r *mutationResolver) EditUser(ctx context.Context, userID string, input model.UserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	userUpdate := input.ToUser()
+	user, err := r.UserRepository.UpdateUser(ctx, userID, userUpdate)
+	result := model.FromUser(user)
+
+	return &result, err
 }
 
 func (r *mutationResolver) SetUserRoles(ctx context.Context, input model.SetRolesInput) (*model.User, error) {
@@ -36,6 +40,10 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return []*model.User{}, nil
+}
+
+func (r *queryResolver) User(ctx context.Context, userID string) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

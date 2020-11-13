@@ -55,4 +55,24 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 		_, dupeErr := repo.CreateUser(ctx, user)
 		require.EqualError(t, dupeErr, ErrUsernameTaken.Error())
 	})
+
+	t.Run("Update user", func(t *testing.T) {
+		ctx := context.Background()
+		testUser, err := repo.GetUserByUsername(ctx, "testuser")
+		require.NoError(t, err)
+		require.NotEmpty(t, testUser.Email)
+		oldEmail := testUser.Email
+		userID := testUser.ID
+
+		newPhoneNumber := "+34678678678"
+		require.NotEqual(t, newPhoneNumber, testUser)
+		testUser.Phone = newPhoneNumber
+		testUser.ID = ""
+
+		updatedUser, err := repo.UpdateUser(ctx, userID, testUser)
+		require.NoError(t, err)
+		require.Equal(t, newPhoneNumber, updatedUser.Phone)
+		require.Equal(t, newPhoneNumber, updatedUser.Phone)
+		require.Equal(t, oldEmail, updatedUser.Email)
+	})
 }

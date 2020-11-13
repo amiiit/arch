@@ -40,6 +40,7 @@ enum TransactionStatus {
 type Query {
     me: User
     users: [User!]
+    user(userId: ID!): User
 }
 
 input UserInput {

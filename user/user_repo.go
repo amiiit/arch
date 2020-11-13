@@ -30,6 +30,7 @@ type UserRepository struct {
 }
 type IUserRepository interface {
 	CreateUser(ctx context.Context, user User) (User, error)
+	UpdateUser(ctx context.Context, userID string, userUpdate User) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserByID(ctx context.Context, username string) (User, error)
 	CreateSession(ctx context.Context, userID string) (Session, error)
@@ -39,12 +40,13 @@ type IUserRepository interface {
 	GetHashedPassword(ctx context.Context, userID string) (string, error)
 }
 
+const USER_FIELDS_NO_ID = `username, first_name, last_name, email, phone, region, hashed_password, password_salt`
+const USER_NAMED_FIELDS_NO_ID = `:username, :first_name, :last_name, :email, :phone, :region, :hashed_password, :password_salt`
+
 func (rep UserRepository) CreateUser(ctx context.Context, user User) (User, error) {
-	_, err := rep.DB.NamedExecContext(ctx, `
-		INSERT INTO users (
-			username, first_name, last_name, email, phone, region, hashed_password, password_salt
-		) values (:username, :first_name, :last_name, :email, :phone, :region, :hashed_password, :password_salt)
-`, user)
+	_, err := rep.DB.NamedExecContext(ctx, fmt.Sprintf(`
+		INSERT INTO users (%s) values (%s)
+`, USER_FIELDS_NO_ID, USER_NAMED_FIELDS_NO_ID), user)
 	if err != nil {
 		if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_username_key"`) {
 			return User{}, ErrUsernameTaken
@@ -58,7 +60,7 @@ func (rep UserRepository) GetUserByUsername(ctx context.Context, username string
 	var user User
 	err := rep.DB.GetContext(ctx, &user, `SELECT * from users where username = $1`, username)
 	if err != nil {
-		return user, fmt.Errorf("error getting user by name: %w", err)
+		return user, fmt.Errorf("error getting user by usernamename: %w", err)
 	}
 	return user, err
 }
@@ -139,4 +141,24 @@ func (r UserRepository) GetHashedPassword(ctx context.Context, userID string) (s
 		return "", fmt.Errorf("retrieving hashed password failed: %w", err)
 	}
 	return user.HashedPassword, err
+}
+
+func (r UserRepository) UpdateUser(ctx context.Context, userID string, updateUser User) (User, error) {
+	query := `
+		UPDATE users SET
+			username = :username,
+			first_name = :first_name,
+			last_name = :last_name,
+			email = :email,
+			phone = :phone,
+			region = :region,
+			hashed_password = :hashed_password
+		WHERE id = '`+userID+`'
+`
+
+	_, err := r.DB.NamedExecContext(ctx, query, updateUser)
+	if err != nil {
+		return User{}, fmt.Errorf("updating user failed: %w", err)
+	}
+	return r.GetUserByID(ctx, userID)
 }
