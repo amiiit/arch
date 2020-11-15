@@ -10,6 +10,7 @@ type Session struct {
 
 type RoleType string
 const AdminRole = RoleType("admin")
+const UserRole = RoleType("user")
 
 type Role struct {
 	ID        string   `db:"id" json:"id"`
@@ -20,6 +21,7 @@ type Role struct {
 
 type UserRoles struct {
 	Admin bool
+	User bool
 }
 
 type AuthService struct {

@@ -116,16 +116,18 @@ func (r UserRepository) InvalidateSession(ctx context.Context, sessionID string)
 
 func (r UserRepository) GetRoles(ctx context.Context, userID string) (UserRoles, error) {
 	var roles []Role
-	err := r.DB.GetContext(ctx, &roles, `
+	err := r.DB.SelectContext(ctx, &roles, `
 		SELECT * FROM roles WHERE user_id=$1
 `, userID)
 
 	userRoles := UserRoles{}
 	for _, role := range roles {
 		switch role.Type {
-		case "admin":
+		case AdminRole:
 			userRoles.Admin = true
 			break
+		case UserRole:
+			userRoles.User = true
 		}
 	}
 

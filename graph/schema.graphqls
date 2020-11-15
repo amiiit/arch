@@ -14,11 +14,11 @@ type User {
     offers: [Offer!]
 }
 
-enum Role {
-    admin
-    user
+type Role {
+    type: String!
 }
-directive @hasRole(role: Role!) on FIELD_DEFINITION
+
+directive @hasRole(role: String!) on FIELD_DEFINITION
 
 type Offer {
     title: String!
@@ -59,6 +59,7 @@ input SetRolesInput {
 
 type Mutation {
     addUser(input: UserInput!): User! @hasRole(role: admin)
+    setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: admin)
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: admin)
     setUserRoles(input: SetRolesInput!): User! @hasRole(role: admin)
 }

@@ -2,11 +2,11 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 )
 
 type contextKey string
+
 const SessionContextKey = contextKey("session")
 const RolesContextKey = contextKey("roles")
 
@@ -15,15 +15,15 @@ func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			token, err := r.Cookie("auth-token")
+			token := r.Header.Get("auth")
 
 			// Allow unauthenticated users in
-			if err != nil || token == nil {
+			if token == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			session, err := userRepo.GetSession(ctx, token.Value)
+			session, err := userRepo.GetSession(ctx, token)
 			if err != nil {
 				http.Error(w, "Invalid cookie", http.StatusForbidden)
 				return
@@ -42,7 +42,6 @@ func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 				http.Error(w, "Error fetching roles", http.StatusInternalServerError)
 				return
 			}
-			fmt.Println("middleware roles", roles)
 			ctx = context.WithValue(ctx, RolesContextKey, roles)
 
 			// and call the next with our new context

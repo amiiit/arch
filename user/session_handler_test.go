@@ -36,7 +36,7 @@ func TestSessionHandler_CreateSession(t *testing.T) {
 	req.Form.Set("username", user.Username)
 	req.Form.Set("password", password)
 
-	sessionHandler := SessionHandler{userService: service}
+	sessionHandler := SessionHandler{UserService: service}
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(sessionHandler.CreateSession)
 	handler.ServeHTTP(rr, req)

@@ -4,15 +4,15 @@ import (
 	"gitlab.com/amiiit/arco/user"
 )
 
-func FromUser(um user.User) User {
+func FromUser(u user.User) User {
 	return User{
-		ID:        um.ID,
-		Username:  um.Username,
-		FirstName: um.FirstName,
-		LastName:  um.LastName,
-		Email:     um.Email,
-		Phone:     &um.Phone,
-		Region:    &um.Region,
+		ID:        u.ID,
+		Username:  u.Username,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Email:     u.Email,
+		Phone:     &u.Phone,
+		Region:    &u.Region,
 	}
 }
 func (ui UserInput) ToUser() user.User {

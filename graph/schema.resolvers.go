@@ -22,6 +22,24 @@ func (r *mutationResolver) AddUser(ctx context.Context, input model.UserInput) (
 	return &userModel, nil
 }
 
+func (r *mutationResolver) SetUserPassword(ctx context.Context, userID string, newPassword string) (*model.User, error) {
+	user, err := r.UserRepository.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	user, err = r.UserService.SetUserPassword(user, newPassword)
+	if err != nil {
+		return nil, err
+	}
+	updatedUser, err := r.UserRepository.UpdateUser(ctx, userID, user)
+	if err != nil {
+		return nil, err
+	}
+
+	result := model.FromUser(updatedUser)
+	return &result, nil
+}
+
 func (r *mutationResolver) EditUser(ctx context.Context, userID string, input model.UserInput) (*model.User, error) {
 	userUpdate := input.ToUser()
 	user, err := r.UserRepository.UpdateUser(ctx, userID, userUpdate)

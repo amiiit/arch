@@ -22,7 +22,8 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	conn, err := sql.Connect("postgres", "user=test dbname=arco_test sslmode=disable")
+
+	conn, err := sql.Connect("postgres", "user=arco dbname=arco sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +54,9 @@ func main() {
 		),
 	)
 
-	sessionHandler := user.SessionHandler{}
+	sessionHandler := user.SessionHandler{
+		UserService: userService,
+	}
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
