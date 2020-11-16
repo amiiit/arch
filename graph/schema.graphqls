@@ -40,7 +40,7 @@ enum TransactionStatus {
 type Query {
     me: User
     users: [User!]
-    user(id: ID!): User @hasRole(role: user)
+    user(id: ID!): User @hasRole(role: "user")
 }
 
 input UserInput {
@@ -58,8 +58,8 @@ input SetRolesInput {
 }
 
 type Mutation {
-    addUser(input: UserInput!): User! @hasRole(role: admin)
-    setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: admin)
-    editUser(userId: String!, input: UserInput!): User! @hasRole(role: admin)
-    setUserRoles(input: SetRolesInput!): User! @hasRole(role: admin)
+    addUser(input: UserInput!): User! @hasRole(role: "admin")
+    setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
+    editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
+    setUserRoles(input: SetRolesInput!): User! @hasRole(role: "admin")
 }
