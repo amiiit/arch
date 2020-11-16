@@ -32,9 +32,9 @@ func TestSessionHandler_CreateSession(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/session", nil)
 	require.NoError(t, err)
-	req.Form = url.Values{}
-	req.Form.Set("username", user.Username)
-	req.Form.Set("password", password)
+	req.PostForm = url.Values{}
+	req.PostForm.Set("username", user.Username)
+	req.PostForm.Set("password", password)
 
 	sessionHandler := SessionHandler{UserService: service}
 	rr := httptest.NewRecorder()

@@ -65,6 +65,12 @@ type IUserRepositoryMock struct {
 	afterInvalidateSessionCounter  uint64
 	beforeInvalidateSessionCounter uint64
 	InvalidateSessionMock          mIUserRepositoryMockInvalidateSession
+
+	funcUpdateUser          func(ctx context.Context, userID string, userUpdate mm_user.User) (u1 mm_user.User, err error)
+	inspectFuncUpdateUser   func(ctx context.Context, userID string, userUpdate mm_user.User)
+	afterUpdateUserCounter  uint64
+	beforeUpdateUserCounter uint64
+	UpdateUserMock          mIUserRepositoryMockUpdateUser
 }
 
 // NewIUserRepositoryMock returns a mock for user.IUserRepository
@@ -97,6 +103,9 @@ func NewIUserRepositoryMock(t minimock.Tester) *IUserRepositoryMock {
 
 	m.InvalidateSessionMock = mIUserRepositoryMockInvalidateSession{mock: m}
 	m.InvalidateSessionMock.callArgs = []*IUserRepositoryMockInvalidateSessionParams{}
+
+	m.UpdateUserMock = mIUserRepositoryMockUpdateUser{mock: m}
+	m.UpdateUserMock.callArgs = []*IUserRepositoryMockUpdateUserParams{}
 
 	return m
 }
@@ -1836,6 +1845,224 @@ func (m *IUserRepositoryMock) MinimockInvalidateSessionInspect() {
 	}
 }
 
+type mIUserRepositoryMockUpdateUser struct {
+	mock               *IUserRepositoryMock
+	defaultExpectation *IUserRepositoryMockUpdateUserExpectation
+	expectations       []*IUserRepositoryMockUpdateUserExpectation
+
+	callArgs []*IUserRepositoryMockUpdateUserParams
+	mutex    sync.RWMutex
+}
+
+// IUserRepositoryMockUpdateUserExpectation specifies expectation struct of the IUserRepository.UpdateUser
+type IUserRepositoryMockUpdateUserExpectation struct {
+	mock    *IUserRepositoryMock
+	params  *IUserRepositoryMockUpdateUserParams
+	results *IUserRepositoryMockUpdateUserResults
+	Counter uint64
+}
+
+// IUserRepositoryMockUpdateUserParams contains parameters of the IUserRepository.UpdateUser
+type IUserRepositoryMockUpdateUserParams struct {
+	ctx        context.Context
+	userID     string
+	userUpdate mm_user.User
+}
+
+// IUserRepositoryMockUpdateUserResults contains results of the IUserRepository.UpdateUser
+type IUserRepositoryMockUpdateUserResults struct {
+	u1  mm_user.User
+	err error
+}
+
+// Expect sets up expected params for IUserRepository.UpdateUser
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) Expect(ctx context.Context, userID string, userUpdate mm_user.User) *mIUserRepositoryMockUpdateUser {
+	if mmUpdateUser.mock.funcUpdateUser != nil {
+		mmUpdateUser.mock.t.Fatalf("IUserRepositoryMock.UpdateUser mock is already set by Set")
+	}
+
+	if mmUpdateUser.defaultExpectation == nil {
+		mmUpdateUser.defaultExpectation = &IUserRepositoryMockUpdateUserExpectation{}
+	}
+
+	mmUpdateUser.defaultExpectation.params = &IUserRepositoryMockUpdateUserParams{ctx, userID, userUpdate}
+	for _, e := range mmUpdateUser.expectations {
+		if minimock.Equal(e.params, mmUpdateUser.defaultExpectation.params) {
+			mmUpdateUser.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmUpdateUser.defaultExpectation.params)
+		}
+	}
+
+	return mmUpdateUser
+}
+
+// Inspect accepts an inspector function that has same arguments as the IUserRepository.UpdateUser
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) Inspect(f func(ctx context.Context, userID string, userUpdate mm_user.User)) *mIUserRepositoryMockUpdateUser {
+	if mmUpdateUser.mock.inspectFuncUpdateUser != nil {
+		mmUpdateUser.mock.t.Fatalf("Inspect function is already set for IUserRepositoryMock.UpdateUser")
+	}
+
+	mmUpdateUser.mock.inspectFuncUpdateUser = f
+
+	return mmUpdateUser
+}
+
+// Return sets up results that will be returned by IUserRepository.UpdateUser
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) Return(u1 mm_user.User, err error) *IUserRepositoryMock {
+	if mmUpdateUser.mock.funcUpdateUser != nil {
+		mmUpdateUser.mock.t.Fatalf("IUserRepositoryMock.UpdateUser mock is already set by Set")
+	}
+
+	if mmUpdateUser.defaultExpectation == nil {
+		mmUpdateUser.defaultExpectation = &IUserRepositoryMockUpdateUserExpectation{mock: mmUpdateUser.mock}
+	}
+	mmUpdateUser.defaultExpectation.results = &IUserRepositoryMockUpdateUserResults{u1, err}
+	return mmUpdateUser.mock
+}
+
+//Set uses given function f to mock the IUserRepository.UpdateUser method
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) Set(f func(ctx context.Context, userID string, userUpdate mm_user.User) (u1 mm_user.User, err error)) *IUserRepositoryMock {
+	if mmUpdateUser.defaultExpectation != nil {
+		mmUpdateUser.mock.t.Fatalf("Default expectation is already set for the IUserRepository.UpdateUser method")
+	}
+
+	if len(mmUpdateUser.expectations) > 0 {
+		mmUpdateUser.mock.t.Fatalf("Some expectations are already set for the IUserRepository.UpdateUser method")
+	}
+
+	mmUpdateUser.mock.funcUpdateUser = f
+	return mmUpdateUser.mock
+}
+
+// When sets expectation for the IUserRepository.UpdateUser which will trigger the result defined by the following
+// Then helper
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) When(ctx context.Context, userID string, userUpdate mm_user.User) *IUserRepositoryMockUpdateUserExpectation {
+	if mmUpdateUser.mock.funcUpdateUser != nil {
+		mmUpdateUser.mock.t.Fatalf("IUserRepositoryMock.UpdateUser mock is already set by Set")
+	}
+
+	expectation := &IUserRepositoryMockUpdateUserExpectation{
+		mock:   mmUpdateUser.mock,
+		params: &IUserRepositoryMockUpdateUserParams{ctx, userID, userUpdate},
+	}
+	mmUpdateUser.expectations = append(mmUpdateUser.expectations, expectation)
+	return expectation
+}
+
+// Then sets up IUserRepository.UpdateUser return parameters for the expectation previously defined by the When method
+func (e *IUserRepositoryMockUpdateUserExpectation) Then(u1 mm_user.User, err error) *IUserRepositoryMock {
+	e.results = &IUserRepositoryMockUpdateUserResults{u1, err}
+	return e.mock
+}
+
+// UpdateUser implements user.IUserRepository
+func (mmUpdateUser *IUserRepositoryMock) UpdateUser(ctx context.Context, userID string, userUpdate mm_user.User) (u1 mm_user.User, err error) {
+	mm_atomic.AddUint64(&mmUpdateUser.beforeUpdateUserCounter, 1)
+	defer mm_atomic.AddUint64(&mmUpdateUser.afterUpdateUserCounter, 1)
+
+	if mmUpdateUser.inspectFuncUpdateUser != nil {
+		mmUpdateUser.inspectFuncUpdateUser(ctx, userID, userUpdate)
+	}
+
+	mm_params := &IUserRepositoryMockUpdateUserParams{ctx, userID, userUpdate}
+
+	// Record call args
+	mmUpdateUser.UpdateUserMock.mutex.Lock()
+	mmUpdateUser.UpdateUserMock.callArgs = append(mmUpdateUser.UpdateUserMock.callArgs, mm_params)
+	mmUpdateUser.UpdateUserMock.mutex.Unlock()
+
+	for _, e := range mmUpdateUser.UpdateUserMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.u1, e.results.err
+		}
+	}
+
+	if mmUpdateUser.UpdateUserMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmUpdateUser.UpdateUserMock.defaultExpectation.Counter, 1)
+		mm_want := mmUpdateUser.UpdateUserMock.defaultExpectation.params
+		mm_got := IUserRepositoryMockUpdateUserParams{ctx, userID, userUpdate}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmUpdateUser.t.Errorf("IUserRepositoryMock.UpdateUser got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmUpdateUser.UpdateUserMock.defaultExpectation.results
+		if mm_results == nil {
+			mmUpdateUser.t.Fatal("No results are set for the IUserRepositoryMock.UpdateUser")
+		}
+		return (*mm_results).u1, (*mm_results).err
+	}
+	if mmUpdateUser.funcUpdateUser != nil {
+		return mmUpdateUser.funcUpdateUser(ctx, userID, userUpdate)
+	}
+	mmUpdateUser.t.Fatalf("Unexpected call to IUserRepositoryMock.UpdateUser. %v %v %v", ctx, userID, userUpdate)
+	return
+}
+
+// UpdateUserAfterCounter returns a count of finished IUserRepositoryMock.UpdateUser invocations
+func (mmUpdateUser *IUserRepositoryMock) UpdateUserAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUpdateUser.afterUpdateUserCounter)
+}
+
+// UpdateUserBeforeCounter returns a count of IUserRepositoryMock.UpdateUser invocations
+func (mmUpdateUser *IUserRepositoryMock) UpdateUserBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUpdateUser.beforeUpdateUserCounter)
+}
+
+// Calls returns a list of arguments used in each call to IUserRepositoryMock.UpdateUser.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmUpdateUser *mIUserRepositoryMockUpdateUser) Calls() []*IUserRepositoryMockUpdateUserParams {
+	mmUpdateUser.mutex.RLock()
+
+	argCopy := make([]*IUserRepositoryMockUpdateUserParams, len(mmUpdateUser.callArgs))
+	copy(argCopy, mmUpdateUser.callArgs)
+
+	mmUpdateUser.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockUpdateUserDone returns true if the count of the UpdateUser invocations corresponds
+// the number of defined expectations
+func (m *IUserRepositoryMock) MinimockUpdateUserDone() bool {
+	for _, e := range m.UpdateUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.UpdateUserMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterUpdateUserCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcUpdateUser != nil && mm_atomic.LoadUint64(&m.afterUpdateUserCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockUpdateUserInspect logs each unmet expectation
+func (m *IUserRepositoryMock) MinimockUpdateUserInspect() {
+	for _, e := range m.UpdateUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IUserRepositoryMock.UpdateUser with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.UpdateUserMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterUpdateUserCounter) < 1 {
+		if m.UpdateUserMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to IUserRepositoryMock.UpdateUser")
+		} else {
+			m.t.Errorf("Expected call to IUserRepositoryMock.UpdateUser with params: %#v", *m.UpdateUserMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcUpdateUser != nil && mm_atomic.LoadUint64(&m.afterUpdateUserCounter) < 1 {
+		m.t.Error("Expected call to IUserRepositoryMock.UpdateUser")
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *IUserRepositoryMock) MinimockFinish() {
 	if !m.minimockDone() {
@@ -1854,6 +2081,8 @@ func (m *IUserRepositoryMock) MinimockFinish() {
 		m.MinimockGetUserByUsernameInspect()
 
 		m.MinimockInvalidateSessionInspect()
+
+		m.MinimockUpdateUserInspect()
 		m.t.FailNow()
 	}
 }
@@ -1884,5 +2113,6 @@ func (m *IUserRepositoryMock) minimockDone() bool {
 		m.MinimockGetSessionDone() &&
 		m.MinimockGetUserByIDDone() &&
 		m.MinimockGetUserByUsernameDone() &&
-		m.MinimockInvalidateSessionDone()
+		m.MinimockInvalidateSessionDone() &&
+		m.MinimockUpdateUserDone()
 }
