@@ -13,6 +13,11 @@ type Offer struct {
 	Description string `json:"description"`
 }
 
+type Pagination struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
 type SetRolesInput struct {
 	UserID string   `json:"userId"`
 	Roles  []string `json:"roles"`
@@ -47,8 +52,8 @@ type UserInput struct {
 }
 
 type UserRoles struct {
-	Admin bool `json:"admin"`
-	User  bool `json:"user"`
+	Admin  bool `json:"admin"`
+	Member bool `json:"member"`
 }
 
 type TransactionStatus string

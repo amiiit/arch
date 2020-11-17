@@ -9,12 +9,13 @@ import (
 
 	"gitlab.com/amiiit/arco/graph/generated"
 	"gitlab.com/amiiit/arco/graph/model"
+	"gitlab.com/amiiit/arco/user"
 )
 
 func (r *mutationResolver) AddUser(ctx context.Context, input model.UserInput) (*model.User, error) {
 	// todo: authentication and roles
-	user := input.ToUser()
-	persistedUser, err := r.UserRepository.CreateUser(ctx, user)
+	userInput := input.ToUser()
+	persistedUser, err := r.UserRepository.CreateUser(ctx, userInput)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +57,21 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return []*model.User{}, nil
+func (r *queryResolver) Users(ctx context.Context, pagination *model.Pagination) ([]*model.User, error) {
+	users, err := r.UserRepository.GetUsers(ctx, user.Pagination{
+		Limit:  pagination.Limit,
+		Offset: pagination.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetching users failed: %w", err)
+	}
+
+	result := make([]*model.User, len(users))
+	for i, user := range users {
+		userModel := model.FromUser(user)
+		result[i] = &userModel
+	}
+	return result, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
@@ -70,10 +84,12 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 }
 
 func (r *userResolver) Roles(ctx context.Context, obj *model.User) (*model.UserRoles, error) {
-	return &model.UserRoles{
-		Admin: false,
-		User:  false,
-	}, nil
+	roles, err := r.UserRepository.GetRoles(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("getting roles for user failed: %w", err)
+	}
+	modelRoles := model.FromUserRoles(roles)
+	return &modelRoles, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

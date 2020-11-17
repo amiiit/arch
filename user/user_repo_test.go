@@ -18,7 +18,7 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 		user := User{
 			Username:       "testuser",
 			FirstName:      "Test",
-			LastName:       "User",
+			LastName:       "Member",
 			Email:          "test@user.net",
 			Phone:          "+123456789",
 			HashedPassword: "fbjslfuhew",
@@ -37,7 +37,7 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 		user := User{
 			Username:       "mustbeunique",
 			FirstName:      "Test",
-			LastName:       "User",
+			LastName:       "Member",
 			Email:          "test@user1.net",
 			Phone:          "+123456789",
 			HashedPassword: "fbjslfuhew",

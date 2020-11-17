@@ -28,11 +28,18 @@ func generateToken() string {
 type UserRepository struct {
 	DB *sql.DB
 }
+
+type Pagination struct {
+	Limit  int
+	Offset int
+}
+
 type IUserRepository interface {
 	CreateUser(ctx context.Context, user User) (User, error)
 	UpdateUser(ctx context.Context, userID string, userUpdate User) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserByID(ctx context.Context, username string) (User, error)
+	GetUsers(ctx context.Context, pagination Pagination) ([]User, error)
 	CreateSession(ctx context.Context, userID string) (Session, error)
 	GetSession(ctx context.Context, hash string) (Session, error)
 	InvalidateSession(ctx context.Context, sessionID string) error
@@ -115,23 +122,16 @@ func (r UserRepository) InvalidateSession(ctx context.Context, sessionID string)
 }
 
 func (r UserRepository) GetRoles(ctx context.Context, userID string) (UserRoles, error) {
-	var roles []Role
-	err := r.DB.SelectContext(ctx, &roles, `
-		SELECT * FROM roles WHERE user_id=$1
-`, userID)
+	result := UserRoles{}
 
-	userRoles := UserRoles{}
-	for _, role := range roles {
-		switch role.Type {
-		case AdminRole:
-			userRoles.Admin = true
-			break
-		case UserRole:
-			userRoles.User = true
-		}
+	err := r.DB.GetContext(ctx, &result, `
+		SELECT admin, member FROM roles WHERE user_id=$1
+`, userID)
+	if err != nil {
+		return result, fmt.Errorf("selecting roles failed: %w", err)
 	}
 
-	return userRoles, err
+	return result, err
 }
 
 func (r UserRepository) GetHashedPassword(ctx context.Context, userID string) (string, error) {
@@ -155,7 +155,7 @@ func (r UserRepository) UpdateUser(ctx context.Context, userID string, updateUse
 			phone = :phone,
 			region = :region,
 			hashed_password = :hashed_password
-		WHERE id = '`+userID+`'
+		WHERE id = '` + userID + `'
 `
 
 	_, err := r.DB.NamedExecContext(ctx, query, updateUser)
@@ -163,4 +163,16 @@ func (r UserRepository) UpdateUser(ctx context.Context, userID string, updateUse
 		return User{}, fmt.Errorf("updating user failed: %w", err)
 	}
 	return r.GetUserByID(ctx, userID)
+}
+
+func (r UserRepository) GetUsers(ctx context.Context, pagination Pagination) ([]User, error) {
+	var result []User
+	query := `
+		SELECT * from users LIMIT $1 OFFSET $2
+`
+	err := r.DB.SelectContext(ctx, &result, query, pagination.Limit, pagination.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching users: %w")
+	}
+	return result, err
 }

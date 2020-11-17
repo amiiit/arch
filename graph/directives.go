@@ -27,8 +27,8 @@ func (d Directives) HasRole(ctx context.Context, obj interface{}, next graphql.R
 	case "admin":
 		allow = roles.Admin
 		break
-	case "user":
-		allow = roles.User
+	case "member":
+		allow = roles.Member
 		break
 	}
 

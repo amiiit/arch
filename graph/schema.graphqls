@@ -16,7 +16,7 @@ type User {
 
 type UserRoles {
     admin: Boolean!
-    user: Boolean!
+    member: Boolean!
 }
 
 directive @hasRole(role: String!) on FIELD_DEFINITION
@@ -38,10 +38,15 @@ enum TransactionStatus {
     rejected
 }
 
+input Pagination {
+    limit: Int!
+    offset: Int!
+}
+
 type Query {
     me: User
-    users: [User!]
-    user(id: ID!): User @hasRole(role: "user")
+    users(pagination: Pagination): [User!]
+    user(id: ID!): User @hasRole(role: "member")
 }
 
 input UserInput {

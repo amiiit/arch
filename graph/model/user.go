@@ -25,3 +25,10 @@ func (ui UserInput) ToUser() user.User {
 		Region:    *ui.Region,
 	}
 }
+
+func FromUserRoles(r user.UserRoles) UserRoles {
+	return UserRoles{
+		Admin:  r.Admin,
+		Member: r.Member,
+	}
+}
