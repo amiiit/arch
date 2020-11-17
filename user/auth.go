@@ -21,7 +21,7 @@ type Role struct {
 
 type UserRoles struct {
 	Admin bool
-	User bool
+	Member bool
 }
 
 type AuthService struct {

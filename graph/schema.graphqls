@@ -10,12 +10,13 @@ type User {
     email: String!
     phone: String
     region: String
-    roles: [Role!]
+    roles: UserRoles
     offers: [Offer!]
 }
 
-type Role {
-    type: String!
+type UserRoles {
+    admin: Boolean!
+    user: Boolean!
 }
 
 directive @hasRole(role: String!) on FIELD_DEFINITION

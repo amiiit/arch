@@ -13,10 +13,6 @@ type Offer struct {
 	Description string `json:"description"`
 }
 
-type Role struct {
-	Type string `json:"type"`
-}
-
 type SetRolesInput struct {
 	UserID string   `json:"userId"`
 	Roles  []string `json:"roles"`
@@ -30,15 +26,15 @@ type Transaction struct {
 }
 
 type User struct {
-	ID        string   `json:"id"`
-	Username  string   `json:"username"`
-	FirstName string   `json:"firstName"`
-	LastName  string   `json:"lastName"`
-	Email     string   `json:"email"`
-	Phone     *string  `json:"phone"`
-	Region    *string  `json:"region"`
-	Roles     []*Role  `json:"roles"`
-	Offers    []*Offer `json:"offers"`
+	ID        string     `json:"id"`
+	Username  string     `json:"username"`
+	FirstName string     `json:"firstName"`
+	LastName  string     `json:"lastName"`
+	Email     string     `json:"email"`
+	Phone     *string    `json:"phone"`
+	Region    *string    `json:"region"`
+	Roles     *UserRoles `json:"roles"`
+	Offers    []*Offer   `json:"offers"`
 }
 
 type UserInput struct {
@@ -48,6 +44,11 @@ type UserInput struct {
 	Email     string  `json:"email"`
 	Phone     *string `json:"phone"`
 	Region    *string `json:"region"`
+}
+
+type UserRoles struct {
+	Admin bool `json:"admin"`
+	User  bool `json:"user"`
 }
 
 type TransactionStatus string
