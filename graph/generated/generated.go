@@ -50,7 +50,7 @@ type ComplexityRoot struct {
 		AddUser         func(childComplexity int, input model.UserInput) int
 		EditUser        func(childComplexity int, userID string, input model.UserInput) int
 		SetUserPassword func(childComplexity int, userID string, newPassword string) int
-		SetUserRoles    func(childComplexity int, input model.SetRolesInput) int
+		SetUserRoles    func(childComplexity int, userID string, roles model.RolesInput) int
 	}
 
 	Offer struct {
@@ -93,7 +93,7 @@ type MutationResolver interface {
 	AddUser(ctx context.Context, input model.UserInput) (*model.User, error)
 	SetUserPassword(ctx context.Context, userID string, newPassword string) (*model.User, error)
 	EditUser(ctx context.Context, userID string, input model.UserInput) (*model.User, error)
-	SetUserRoles(ctx context.Context, input model.SetRolesInput) (*model.User, error)
+	SetUserRoles(ctx context.Context, userID string, roles model.RolesInput) (*model.User, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -165,7 +165,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetUserRoles(childComplexity, args["input"].(model.SetRolesInput)), true
+		return e.complexity.Mutation.SetUserRoles(childComplexity, args["userId"].(string), args["roles"].(model.RolesInput)), true
 
 	case "Offer.description":
 		if e.complexity.Offer.Description == nil {
@@ -441,6 +441,11 @@ input UserInput {
     region: String
 }
 
+input RolesInput {
+    admin: Boolean!
+    member: Boolean!
+}
+
 input SetRolesInput {
     userId: ID!
     roles:[String!]
@@ -450,7 +455,7 @@ type Mutation {
     addUser(input: UserInput!): User! @hasRole(role: "admin")
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
-    setUserRoles(input: SetRolesInput!): User! @hasRole(role: "admin")
+    setUserRoles(userId: String!, roles: RolesInput!): User! @hasRole(role: "admin")
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -540,15 +545,24 @@ func (ec *executionContext) field_Mutation_setUserPassword_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_setUserRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.SetRolesInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSetRolesInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐSetRolesInput(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["userId"] = arg0
+	var arg1 model.RolesInput
+	if tmp, ok := rawArgs["roles"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+		arg1, err = ec.unmarshalNRolesInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐRolesInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roles"] = arg1
 	return args, nil
 }
 
@@ -859,7 +873,7 @@ func (ec *executionContext) _Mutation_setUserRoles(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().SetUserRoles(rctx, args["input"].(model.SetRolesInput))
+			return ec.resolvers.Mutation().SetUserRoles(rctx, args["userId"].(string), args["roles"].(model.RolesInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNString2string(ctx, "admin")
@@ -2802,6 +2816,34 @@ func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRolesInput(ctx context.Context, obj interface{}) (model.RolesInput, error) {
+	var it model.RolesInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "admin":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("admin"))
+			it.Admin, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "member":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("member"))
+			it.Member, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSetRolesInput(ctx context.Context, obj interface{}) (model.SetRolesInput, error) {
 	var it model.SetRolesInput
 	var asMap = obj.(map[string]interface{})
@@ -3477,8 +3519,8 @@ func (ec *executionContext) marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgrap
 	return ec._Offer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSetRolesInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐSetRolesInput(ctx context.Context, v interface{}) (model.SetRolesInput, error) {
-	res, err := ec.unmarshalInputSetRolesInput(ctx, v)
+func (ec *executionContext) unmarshalNRolesInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐRolesInput(ctx context.Context, v interface{}) (model.RolesInput, error) {
+	res, err := ec.unmarshalInputRolesInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

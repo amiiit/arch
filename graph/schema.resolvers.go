@@ -49,7 +49,8 @@ func (r *mutationResolver) EditUser(ctx context.Context, userID string, input mo
 	return &result, err
 }
 
-func (r *mutationResolver) SetUserRoles(ctx context.Context, input model.SetRolesInput) (*model.User, error) {
+func (r *mutationResolver) SetUserRoles(ctx context.Context, userID string, roles model.RolesInput) (*model.User, error) {
+	r.UserRepository.SetUserRoles()
 	panic(fmt.Errorf("not implemented"))
 }
 

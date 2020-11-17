@@ -74,3 +74,37 @@ func TestUserRepository_CreateGetUser(t *testing.T) {
 		require.Equal(t, oldEmail, updatedUser.Email)
 	})
 }
+
+func TestUserRepository_SetUserRoles(t *testing.T) {
+	conn, err := sql.Connect("postgres", "user=test dbname=arco_test sslmode=disable")
+	_, err = conn.Exec("delete from users;")
+	_, err = conn.Exec("delete from roles;")
+	require.NoError(t, err)
+	repo := UserRepository{DB: conn}
+
+	user := User{
+		Username:       "testuser",
+		FirstName:      "Test",
+		LastName:       "Member",
+		Email:          "test@user.net",
+		Phone:          "+123456789",
+		HashedPassword: "fbjslfuhew",
+	}
+	ctx := context.Background()
+	user, err = repo.CreateUser(ctx, user)
+	require.NoError(t, err)
+	require.NotEmpty(t, user.ID)
+
+	t.Run("Insert roles", func(t *testing.T) {
+		err = repo.SetUserRoles(ctx, user.ID, UserRoles{
+			Admin:  false,
+			Member: true,
+		})
+		require.NoError(t, err)
+
+		roles, err := repo.GetRoles(ctx, user.ID)
+		require.NoError(t, err)
+		require.True(t, roles.Member)
+		require.False(t, roles.Admin)
+	})
+}

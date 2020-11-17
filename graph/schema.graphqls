@@ -58,6 +58,11 @@ input UserInput {
     region: String
 }
 
+input RolesInput {
+    admin: Boolean!
+    member: Boolean!
+}
+
 input SetRolesInput {
     userId: ID!
     roles:[String!]
@@ -67,5 +72,5 @@ type Mutation {
     addUser(input: UserInput!): User! @hasRole(role: "admin")
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
-    setUserRoles(input: SetRolesInput!): User! @hasRole(role: "admin")
+    setUserRoles(userId: String!, roles: RolesInput!): User! @hasRole(role: "admin")
 }

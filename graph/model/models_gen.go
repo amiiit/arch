@@ -18,6 +18,11 @@ type Pagination struct {
 	Offset int `json:"offset"`
 }
 
+type RolesInput struct {
+	Admin  bool `json:"admin"`
+	Member bool `json:"member"`
+}
+
 type SetRolesInput struct {
 	UserID string   `json:"userId"`
 	Roles  []string `json:"roles"`

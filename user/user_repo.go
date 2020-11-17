@@ -44,6 +44,7 @@ type IUserRepository interface {
 	GetSession(ctx context.Context, hash string) (Session, error)
 	InvalidateSession(ctx context.Context, sessionID string) error
 	GetRoles(ctx context.Context, userID string) (UserRoles, error)
+	SetUserRoles(ctx context.Context, userID string, roles UserRoles) error
 	GetHashedPassword(ctx context.Context, userID string) (string, error)
 }
 
@@ -122,7 +123,9 @@ func (r UserRepository) InvalidateSession(ctx context.Context, sessionID string)
 }
 
 func (r UserRepository) GetRoles(ctx context.Context, userID string) (UserRoles, error) {
-	result := UserRoles{}
+	result := UserRoles{
+		UserID: userID,
+	}
 
 	err := r.DB.GetContext(ctx, &result, `
 		SELECT admin, member FROM roles WHERE user_id=$1
@@ -172,7 +175,40 @@ func (r UserRepository) GetUsers(ctx context.Context, pagination Pagination) ([]
 `
 	err := r.DB.SelectContext(ctx, &result, query, pagination.Limit, pagination.Offset)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching users: %w")
+		return nil, fmt.Errorf("error fetching users: %w", err)
 	}
 	return result, err
+}
+
+func (r UserRepository) SetUserRoles(ctx context.Context, userID string, roles UserRoles) (err error) {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed starting a transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+		err = tx.Commit()
+	}()
+
+	rows, err := tx.QueryContext(ctx, `SELECT user_id FROM roles where user_id=$1`, userID)
+	if err != nil {
+		return fmt.Errorf("failed fetching existing roles :%w", err)
+	}
+	if !rows.Next() {
+		_, err := tx.ExecContext(ctx, `INSERT INTO roles (user_id) values ($1)`, userID)
+		if err != nil {
+			return fmt.Errorf("inserting default roles failed: %w", err)
+		}
+	}
+	_, err = tx.ExecContext(ctx, `
+		UPDATE roles 
+			SET admin=$1, member=$2 
+			WHERE user_id=$3`, roles.Admin, roles.Member, userID)
+	if err != nil {
+		return fmt.Errorf("updating default roles failed: %w", err)
+	}
+
+	return nil
 }
