@@ -13,6 +13,11 @@ type Offer struct {
 	Description string `json:"description"`
 }
 
+type Pagination struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
 type Role struct {
 	Type string `json:"type"`
 }

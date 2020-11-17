@@ -9,6 +9,7 @@ type Session struct {
 }
 
 type RoleType string
+
 const AdminRole = RoleType("admin")
 const UserRole = RoleType("user")
 
@@ -20,11 +21,11 @@ type Role struct {
 }
 
 type UserRoles struct {
-	Admin bool
-	User bool
+	Admin  bool   `db:"admin"`
+	User   bool   `db:"user"`
+	UserID string `db:"user_id"`
 }
 
 type AuthService struct {
 	userRepo IUserRepository
 }
-

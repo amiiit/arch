@@ -59,7 +59,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Me    func(childComplexity int) int
 		User  func(childComplexity int, id string) int
-		Users func(childComplexity int) int
+		Users func(childComplexity int, pagination *model.Pagination) int
 	}
 
 	Role struct {
@@ -94,7 +94,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
-	Users(ctx context.Context) ([]*model.User, error)
+	Users(ctx context.Context, pagination *model.Pagination) ([]*model.User, error)
 	User(ctx context.Context, id string) (*model.User, error)
 }
 
@@ -199,7 +199,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Users(childComplexity), true
+		args, err := ec.field_Query_users_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Users(childComplexity, args["pagination"].(*model.Pagination)), true
 
 	case "Role.type":
 		if e.complexity.Role.Type == nil {
@@ -402,10 +407,15 @@ enum TransactionStatus {
     rejected
 }
 
+input Pagination {
+    limit: Int!
+    offset: Int!
+}
+
 type Query {
     me: User
-    users: [User!]
-    user(id: ID!): User @hasRole(role: user)
+    users(pagination: Pagination): [User!]
+    user(id: ID!): User @hasRole(role: "user")
 }
 
 input UserInput {
@@ -423,10 +433,10 @@ input SetRolesInput {
 }
 
 type Mutation {
-    addUser(input: UserInput!): User! @hasRole(role: admin)
-    setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: admin)
-    editUser(userId: String!, input: UserInput!): User! @hasRole(role: admin)
-    setUserRoles(input: SetRolesInput!): User! @hasRole(role: admin)
+    addUser(input: UserInput!): User! @hasRole(role: "admin")
+    setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
+    editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
+    setUserRoles(input: SetRolesInput!): User! @hasRole(role: "admin")
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -555,6 +565,21 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg0, err = ec.unmarshalOPagination2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg0
 	return args, nil
 }
 
@@ -978,9 +1003,16 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_users_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
+		return ec.resolvers.Query().Users(rctx, args["pagination"].(*model.Pagination))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2693,6 +2725,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj interface{}) (model.Pagination, error) {
+	var it model.Pagination
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "limit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			it.Limit, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "offset":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			it.Offset, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSetRolesInput(ctx context.Context, obj interface{}) (model.SetRolesInput, error) {
 	var it model.SetRolesInput
 	var asMap = obj.(map[string]interface{})
@@ -3704,6 +3764,14 @@ func (ec *executionContext) marshalOOffer2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋg
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) unmarshalOPagination2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPagination(ctx context.Context, v interface{}) (*model.Pagination, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPagination(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalORole2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Role) graphql.Marshaler {

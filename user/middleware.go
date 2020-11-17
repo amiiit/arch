@@ -39,7 +39,7 @@ func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 
 			roles, err := userRepo.GetRoles(ctx, session.UserID)
 			if err != nil {
-				http.Error(w, "Error fetching roles", http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			ctx = context.WithValue(ctx, RolesContextKey, roles)

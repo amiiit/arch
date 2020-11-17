@@ -9,6 +9,7 @@ import (
 
 	"gitlab.com/amiiit/arco/graph/generated"
 	"gitlab.com/amiiit/arco/graph/model"
+	"gitlab.com/amiiit/arco/user"
 )
 
 func (r *mutationResolver) AddUser(ctx context.Context, input model.UserInput) (*model.User, error) {
@@ -56,8 +57,21 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return []*model.User{}, nil
+func (r *queryResolver) Users(ctx context.Context, pagination *model.Pagination) ([]*model.User, error) {
+	users, err := r.UserRepository.GetUsers(ctx, user.Pagination{
+		Limit:  pagination.Limit,
+		Offset: pagination.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetching users failed: %w", err)
+	}
+
+	result := make([]*model.User, len(users))
+	for i, user := range users {
+		userModel := model.FromUser(user)
+		result[i] = &userModel
+	}
+	return result, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {

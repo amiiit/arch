@@ -37,9 +37,14 @@ enum TransactionStatus {
     rejected
 }
 
+input Pagination {
+    limit: Int!
+    offset: Int!
+}
+
 type Query {
     me: User
-    users: [User!]
+    users(pagination: Pagination): [User!]
     user(id: ID!): User @hasRole(role: "user")
 }
 
