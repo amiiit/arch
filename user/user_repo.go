@@ -45,11 +45,12 @@ type IUserRepository interface {
 	InvalidateSession(ctx context.Context, sessionID string) error
 	GetRoles(ctx context.Context, userID string) (UserRoles, error)
 	SetUserRoles(ctx context.Context, userID string, roles UserRoles) error
+	SetUserSuspended(ctx context.Context, userID string, suspended bool) (User, error)
 	GetHashedPassword(ctx context.Context, userID string) (string, error)
 }
 
-const USER_FIELDS_NO_ID = `username, first_name, last_name, email, phone, region, hashed_password`
-const USER_NAMED_FIELDS_NO_ID = `:username, :first_name, :last_name, :email, :phone, :region, :hashed_password`
+const USER_FIELDS_NO_ID = `username, first_name, last_name, email, phone, region, hashed_password, suspended`
+const USER_NAMED_FIELDS_NO_ID = `:username, :first_name, :last_name, :email, :phone, :region, :hashed_password, :suspended`
 
 func (rep UserRepository) CreateUser(ctx context.Context, user User) (User, error) {
 	_, err := rep.DB.NamedExecContext(ctx, fmt.Sprintf(`
@@ -209,4 +210,14 @@ func (r UserRepository) SetUserRoles(ctx context.Context, userID string, roles U
 	}
 
 	return nil
+}
+
+func (r UserRepository) SetUserSuspended(ctx context.Context, userID string, suspended bool) (User, error) {
+	_, err := r.DB.ExecContext(ctx, `
+		UPDATE users SET suspended=$1 WHERE id=$2
+`, suspended, userID)
+	if err != nil {
+		return User{}, fmt.Errorf("setting suspension to user failed: %w", err)
+	}
+	return r.GetUserByID(ctx, userID)
 }

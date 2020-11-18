@@ -37,6 +37,10 @@ func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 			}
 			ctx = context.WithValue(ctx, UserContextKey, sessionUser)
 
+			if sessionUser.Suspended {
+				http.Error(w, "This account has been suspended", http.StatusForbidden)
+				return
+			}
 			roles, err := userRepo.GetRoles(ctx, session.UserID)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

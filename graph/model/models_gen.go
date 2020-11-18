@@ -45,6 +45,7 @@ type User struct {
 	Region    *string    `json:"region"`
 	Roles     *UserRoles `json:"roles"`
 	Offers    []*Offer   `json:"offers"`
+	Suspended bool       `json:"suspended"`
 }
 
 type UserInput struct {

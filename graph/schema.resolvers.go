@@ -61,6 +61,15 @@ func (r *mutationResolver) SetUserRoles(ctx context.Context, userID string, role
 	return &userModel, err
 }
 
+func (r *mutationResolver) SetUserSuspended(ctx context.Context, userID string, suspended bool) (*model.User, error) {
+	updatedUser, err := r.UserRepository.SetUserSuspended(ctx, userID, suspended)
+	if err != nil {
+		return nil, err
+	}
+	result := model.FromUser(updatedUser)
+	return &result, err
+}
+
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	contextUser := ctx.Value(user.UserContextKey)
 	if contextUser == nil {

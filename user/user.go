@@ -18,6 +18,7 @@ type User struct {
 	HashedPassword string    `db:"hashed_password"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
 	LastUpdated    time.Time `db:"last_updated" json:"last_updated"`
+	Suspended      bool      `db:"suspended" json:"suspended"`
 }
 
 type UserService struct {

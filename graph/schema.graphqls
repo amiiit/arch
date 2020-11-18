@@ -74,4 +74,5 @@ type Mutation {
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
     setUserRoles(userId: String!, roles: RolesInput!): User! @hasRole(role: "admin")
+    setUserSuspended(userId: String!, suspended: Boolean!): User @hasRole(role: "admin")
 }

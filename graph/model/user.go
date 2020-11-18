@@ -13,6 +13,7 @@ func FromUser(u user.User) User {
 		Email:     u.Email,
 		Phone:     &u.Phone,
 		Region:    &u.Region,
+		Suspended: u.Suspended,
 	}
 }
 func (ui UserInput) ToUser() user.User {

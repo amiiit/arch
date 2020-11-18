@@ -47,10 +47,11 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddUser         func(childComplexity int, input model.UserInput) int
-		EditUser        func(childComplexity int, userID string, input model.UserInput) int
-		SetUserPassword func(childComplexity int, userID string, newPassword string) int
-		SetUserRoles    func(childComplexity int, userID string, roles model.RolesInput) int
+		AddUser          func(childComplexity int, input model.UserInput) int
+		EditUser         func(childComplexity int, userID string, input model.UserInput) int
+		SetUserPassword  func(childComplexity int, userID string, newPassword string) int
+		SetUserRoles     func(childComplexity int, userID string, roles model.RolesInput) int
+		SetUserSuspended func(childComplexity int, userID string, suspended bool) int
 	}
 
 	Offer struct {
@@ -80,6 +81,7 @@ type ComplexityRoot struct {
 		Phone     func(childComplexity int) int
 		Region    func(childComplexity int) int
 		Roles     func(childComplexity int) int
+		Suspended func(childComplexity int) int
 		Username  func(childComplexity int) int
 	}
 
@@ -94,6 +96,7 @@ type MutationResolver interface {
 	SetUserPassword(ctx context.Context, userID string, newPassword string) (*model.User, error)
 	EditUser(ctx context.Context, userID string, input model.UserInput) (*model.User, error)
 	SetUserRoles(ctx context.Context, userID string, roles model.RolesInput) (*model.User, error)
+	SetUserSuspended(ctx context.Context, userID string, suspended bool) (*model.User, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -166,6 +169,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SetUserRoles(childComplexity, args["userId"].(string), args["roles"].(model.RolesInput)), true
+
+	case "Mutation.setUserSuspended":
+		if e.complexity.Mutation.SetUserSuspended == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setUserSuspended_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetUserSuspended(childComplexity, args["userId"].(string), args["suspended"].(bool)), true
 
 	case "Offer.description":
 		if e.complexity.Offer.Description == nil {
@@ -296,6 +311,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Roles(childComplexity), true
 
+	case "User.suspended":
+		if e.complexity.User.Suspended == nil {
+			break
+		}
+
+		return e.complexity.User.Suspended(childComplexity), true
+
 	case "User.username":
 		if e.complexity.User.Username == nil {
 			break
@@ -395,6 +417,7 @@ type User {
     region: String
     roles: UserRoles
     offers: [Offer!]
+    suspended: Boolean!
 }
 
 type UserRoles {
@@ -456,6 +479,7 @@ type Mutation {
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
     setUserRoles(userId: String!, roles: RolesInput!): User! @hasRole(role: "admin")
+    setUserSuspended(userId: String!, suspended: Boolean!): User @hasRole(role: "admin")
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -563,6 +587,30 @@ func (ec *executionContext) field_Mutation_setUserRoles_args(ctx context.Context
 		}
 	}
 	args["roles"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setUserSuspended_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["suspended"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("suspended"))
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["suspended"] = arg1
 	return args, nil
 }
 
@@ -911,6 +959,69 @@ func (ec *executionContext) _Mutation_setUserRoles(ctx context.Context, field gr
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setUserSuspended(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setUserSuspended_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().SetUserSuspended(rctx, args["userId"].(string), args["suspended"].(bool))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "admin")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Offer_title(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
@@ -1629,6 +1740,41 @@ func (ec *executionContext) _User_offers(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*model.Offer)
 	fc.Result = res
 	return ec.marshalOOffer2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_suspended(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Suspended, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserRoles_admin(ctx context.Context, field graphql.CollectedField, obj *model.UserRoles) (ret graphql.Marshaler) {
@@ -2975,6 +3121,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "setUserSuspended":
+			out.Values[i] = ec._Mutation_setUserSuspended(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3176,6 +3324,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			})
 		case "offers":
 			out.Values[i] = ec._User_offers(ctx, field, obj)
+		case "suspended":
+			out.Values[i] = ec._User_suspended(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
