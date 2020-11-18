@@ -12,6 +12,7 @@ type User {
     region: String
     roles: UserRoles
     offers: [Offer!]
+    suspended: Boolean!
 }
 
 type UserRoles {
