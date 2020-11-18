@@ -7,7 +7,7 @@ import (
 
 type contextKey string
 
-const SessionContextKey = contextKey("session")
+const UserContextKey = contextKey("user")
 const RolesContextKey = contextKey("roles")
 
 // Middleware decodes the share session cookie and packs the session into context
@@ -35,7 +35,7 @@ func Middleware(userRepo IUserRepository) func(http.Handler) http.Handler {
 				http.Error(w, "Error fetching user", http.StatusInternalServerError)
 				return
 			}
-			ctx = context.WithValue(ctx, SessionContextKey, sessionUser)
+			ctx = context.WithValue(ctx, UserContextKey, sessionUser)
 
 			roles, err := userRepo.GetRoles(ctx, session.UserID)
 			if err != nil {

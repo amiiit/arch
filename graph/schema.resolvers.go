@@ -62,7 +62,13 @@ func (r *mutationResolver) SetUserRoles(ctx context.Context, userID string, role
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	contextUser := ctx.Value(user.UserContextKey)
+	if contextUser == nil {
+		return nil, fmt.Errorf("session is not assigned to a user")
+	}
+	sessionUser := contextUser.(user.User)
+	result := model.FromUser(sessionUser)
+	return &result, nil
 }
 
 func (r *queryResolver) Users(ctx context.Context, pagination *model.Pagination) ([]*model.User, error) {
