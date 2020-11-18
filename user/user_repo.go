@@ -203,9 +203,7 @@ func (r UserRepository) SetUserRoles(ctx context.Context, userID string, roles U
 		}
 	}
 	_, err = tx.ExecContext(ctx, `
-		UPDATE roles 
-			SET admin=$1, member=$2 
-			WHERE user_id=$3`, roles.Admin, roles.Member, userID)
+		UPDATE roles SET admin=$1, member=$2 WHERE user_id=$3`, roles.Admin, roles.Member, userID)
 	if err != nil {
 		return fmt.Errorf("updating default roles failed: %w", err)
 	}

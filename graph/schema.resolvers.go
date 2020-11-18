@@ -50,8 +50,15 @@ func (r *mutationResolver) EditUser(ctx context.Context, userID string, input mo
 }
 
 func (r *mutationResolver) SetUserRoles(ctx context.Context, userID string, roles model.RolesInput) (*model.User, error) {
-	r.UserRepository.SetUserRoles()
-	panic(fmt.Errorf("not implemented"))
+	err := r.UserRepository.SetUserRoles(ctx, userID, user.UserRoles{
+		Admin:  roles.Admin,
+		Member: roles.Member,
+		UserID: userID,
+	})
+
+	persistedUser, err := r.UserRepository.GetUserByID(ctx, userID)
+	userModel := model.FromUser(persistedUser)
+	return &userModel, err
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
