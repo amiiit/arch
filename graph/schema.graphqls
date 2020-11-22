@@ -107,9 +107,14 @@ input OfferDescriptionInput {
     description: String!
 }
 
+input DeleteOfferDescriptionInput {
+    offerId: String!
+    language: String!
+}
 
 type Mutation {
     setOfferDescription(offerId: String!, input: OfferDescriptionInput): Offer! @hasRole(role: "member")
+    removeOfferDescription(input: DeleteOfferDescriptionInput!): Offer! @hasRole(role: "member")
     addOffer(input: OfferInput!): User! @hasRole(role: "member")
     editOffer(offerId: String!, input: OfferInput!): Offer! @hasRole(role: "member")
     requestOfferRevision(offerId: String!): Offer! @hasRole(role: "member")

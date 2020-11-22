@@ -51,6 +51,7 @@ type ComplexityRoot struct {
 		AddUser                func(childComplexity int, input model.UserInput) int
 		EditOffer              func(childComplexity int, offerID string, input model.OfferInput) int
 		EditUser               func(childComplexity int, userID string, input model.UserInput) int
+		RemoveOfferDescription func(childComplexity int, input model.DeleteOfferDescriptionInput) int
 		RequestOfferRevision   func(childComplexity int, offerID string) int
 		SetOfferDescription    func(childComplexity int, offerID string, input *model.OfferDescriptionInput) int
 		SetOfferPublishedState func(childComplexity int, offerID string, state *model.PublishedState) int
@@ -117,6 +118,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	SetOfferDescription(ctx context.Context, offerID string, input *model.OfferDescriptionInput) (*model.Offer, error)
+	RemoveOfferDescription(ctx context.Context, input model.DeleteOfferDescriptionInput) (*model.Offer, error)
 	AddOffer(ctx context.Context, input model.OfferInput) (*model.User, error)
 	EditOffer(ctx context.Context, offerID string, input model.OfferInput) (*model.Offer, error)
 	RequestOfferRevision(ctx context.Context, offerID string) (*model.Offer, error)
@@ -198,6 +200,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.EditUser(childComplexity, args["userId"].(string), args["input"].(model.UserInput)), true
+
+	case "Mutation.removeOfferDescription":
+		if e.complexity.Mutation.RemoveOfferDescription == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeOfferDescription_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveOfferDescription(childComplexity, args["input"].(model.DeleteOfferDescriptionInput)), true
 
 	case "Mutation.requestOfferRevision":
 		if e.complexity.Mutation.RequestOfferRevision == nil {
@@ -702,9 +716,14 @@ input OfferDescriptionInput {
     description: String!
 }
 
+input DeleteOfferDescriptionInput {
+    offerId: String!
+    language: String!
+}
 
 type Mutation {
     setOfferDescription(offerId: String!, input: OfferDescriptionInput): Offer! @hasRole(role: "member")
+    removeOfferDescription(input: DeleteOfferDescriptionInput!): Offer! @hasRole(role: "member")
     addOffer(input: OfferInput!): User! @hasRole(role: "member")
     editOffer(offerId: String!, input: OfferInput!): Offer! @hasRole(role: "member")
     requestOfferRevision(offerId: String!): Offer! @hasRole(role: "member")
@@ -814,6 +833,21 @@ func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, ra
 		}
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeOfferDescription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.DeleteOfferDescriptionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteOfferDescriptionInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐDeleteOfferDescriptionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1092,6 +1126,72 @@ func (ec *executionContext) _Mutation_setOfferDescription(ctx context.Context, f
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().SetOfferDescription(rctx, args["offerId"].(string), args["input"].(*model.OfferDescriptionInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "member")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Offer); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.Offer`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeOfferDescription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeOfferDescription_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RemoveOfferDescription(rctx, args["input"].(model.DeleteOfferDescriptionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNString2string(ctx, "member")
@@ -4095,6 +4195,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputDeleteOfferDescriptionInput(ctx context.Context, obj interface{}) (model.DeleteOfferDescriptionInput, error) {
+	var it model.DeleteOfferDescriptionInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "offerId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerId"))
+			it.OfferID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "language":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("language"))
+			it.Language, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputOfferDescriptionInput(ctx context.Context, obj interface{}) (model.OfferDescriptionInput, error) {
 	var it model.OfferDescriptionInput
 	var asMap = obj.(map[string]interface{})
@@ -4336,6 +4464,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "setOfferDescription":
 			out.Values[i] = ec._Mutation_setOfferDescription(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeOfferDescription":
+			out.Values[i] = ec._Mutation_removeOfferDescription(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -4991,6 +5124,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNDeleteOfferDescriptionInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐDeleteOfferDescriptionInput(ctx context.Context, v interface{}) (model.DeleteOfferDescriptionInput, error) {
+	res, err := ec.unmarshalInputDeleteOfferDescriptionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {

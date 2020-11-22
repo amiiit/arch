@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+type DeleteOfferDescriptionInput struct {
+	OfferID  string `json:"offerId"`
+	Language string `json:"language"`
+}
+
 type Offer struct {
 	ID                string              `json:"id"`
 	Category          *OfferCategory      `json:"category"`

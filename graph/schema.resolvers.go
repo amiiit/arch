@@ -16,6 +16,10 @@ func (r *mutationResolver) SetOfferDescription(ctx context.Context, offerID stri
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) RemoveOfferDescription(ctx context.Context, input model.DeleteOfferDescriptionInput) (*model.Offer, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) AddOffer(ctx context.Context, input model.OfferInput) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
