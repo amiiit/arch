@@ -9,8 +9,39 @@ import (
 )
 
 type Offer struct {
+	ID                string              `json:"id"`
+	Category          *OfferCategory      `json:"category"`
+	Title             string              `json:"title"`
+	HourlyPriceFiat   float64             `json:"HourlyPriceFiat"`
+	HourlyPriceTokens float64             `json:"HourlyPriceTokens"`
+	Descriptions      []*OfferDescription `json:"descriptions"`
+	Description       *OfferDescription   `json:"description"`
+	PublishedState    PublishedState      `json:"publishedState"`
+}
+
+type OfferCategory struct {
+	ID     string   `json:"id"`
+	Code   string   `json:"code"`
+	Offers []*Offer `json:"offers"`
+}
+
+type OfferDescription struct {
+	ID          string `json:"id"`
+	Language    string `json:"language"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+}
+
+type OfferDescriptionInput struct {
+	Language    string `json:"language"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type OfferInput struct {
+	CategoryCode      string  `json:"categoryCode"`
+	HourlyPriceFiat   float64 `json:"HourlyPriceFiat"`
+	HourlyPriceTokens float64 `json:"HourlyPriceTokens"`
 }
 
 type Pagination struct {
@@ -60,6 +91,53 @@ type UserInput struct {
 type UserRoles struct {
 	Admin  bool `json:"admin"`
 	Member bool `json:"member"`
+}
+
+type PublishedState string
+
+const (
+	PublishedStateDraft            PublishedState = "Draft"
+	PublishedStatePublished        PublishedState = "Published"
+	PublishedStatePendingReview    PublishedState = "PendingReview"
+	PublishedStateChangesRequested PublishedState = "ChangesRequested"
+	PublishedStateRejected         PublishedState = "Rejected"
+)
+
+var AllPublishedState = []PublishedState{
+	PublishedStateDraft,
+	PublishedStatePublished,
+	PublishedStatePendingReview,
+	PublishedStateChangesRequested,
+	PublishedStateRejected,
+}
+
+func (e PublishedState) IsValid() bool {
+	switch e {
+	case PublishedStateDraft, PublishedStatePublished, PublishedStatePendingReview, PublishedStateChangesRequested, PublishedStateRejected:
+		return true
+	}
+	return false
+}
+
+func (e PublishedState) String() string {
+	return string(e)
+}
+
+func (e *PublishedState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PublishedState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PublishedState", str)
+	}
+	return nil
+}
+
+func (e PublishedState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type TransactionStatus string

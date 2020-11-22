@@ -47,15 +47,39 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddUser          func(childComplexity int, input model.UserInput) int
-		EditUser         func(childComplexity int, userID string, input model.UserInput) int
-		SetUserPassword  func(childComplexity int, userID string, newPassword string) int
-		SetUserRoles     func(childComplexity int, userID string, roles model.RolesInput) int
-		SetUserSuspended func(childComplexity int, userID string, suspended bool) int
+		AddOffer               func(childComplexity int, input model.OfferInput) int
+		AddUser                func(childComplexity int, input model.UserInput) int
+		EditOffer              func(childComplexity int, offerID string, input model.OfferInput) int
+		EditUser               func(childComplexity int, userID string, input model.UserInput) int
+		RequestOfferRevision   func(childComplexity int, offerID string) int
+		SetOfferDescription    func(childComplexity int, offerID string, input *model.OfferDescriptionInput) int
+		SetOfferPublishedState func(childComplexity int, offerID string, state *model.PublishedState) int
+		SetUserPassword        func(childComplexity int, userID string, newPassword string) int
+		SetUserRoles           func(childComplexity int, userID string, roles model.RolesInput) int
+		SetUserSuspended       func(childComplexity int, userID string, suspended bool) int
 	}
 
 	Offer struct {
+		Category          func(childComplexity int) int
+		Description       func(childComplexity int, language string) int
+		Descriptions      func(childComplexity int) int
+		HourlyPriceFiat   func(childComplexity int) int
+		HourlyPriceTokens func(childComplexity int) int
+		ID                func(childComplexity int) int
+		PublishedState    func(childComplexity int) int
+		Title             func(childComplexity int) int
+	}
+
+	OfferCategory struct {
+		Code   func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Offers func(childComplexity int, pagination *model.Pagination) int
+	}
+
+	OfferDescription struct {
 		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Language    func(childComplexity int) int
 		Title       func(childComplexity int) int
 	}
 
@@ -92,6 +116,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
+	SetOfferDescription(ctx context.Context, offerID string, input *model.OfferDescriptionInput) (*model.Offer, error)
+	AddOffer(ctx context.Context, input model.OfferInput) (*model.User, error)
+	EditOffer(ctx context.Context, offerID string, input model.OfferInput) (*model.Offer, error)
+	RequestOfferRevision(ctx context.Context, offerID string) (*model.Offer, error)
+	SetOfferPublishedState(ctx context.Context, offerID string, state *model.PublishedState) (*model.Offer, error)
 	AddUser(ctx context.Context, input model.UserInput) (*model.User, error)
 	SetUserPassword(ctx context.Context, userID string, newPassword string) (*model.User, error)
 	EditUser(ctx context.Context, userID string, input model.UserInput) (*model.User, error)
@@ -122,6 +151,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Mutation.addOffer":
+		if e.complexity.Mutation.AddOffer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addOffer_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddOffer(childComplexity, args["input"].(model.OfferInput)), true
+
 	case "Mutation.addUser":
 		if e.complexity.Mutation.AddUser == nil {
 			break
@@ -134,6 +175,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddUser(childComplexity, args["input"].(model.UserInput)), true
 
+	case "Mutation.editOffer":
+		if e.complexity.Mutation.EditOffer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editOffer_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditOffer(childComplexity, args["offerId"].(string), args["input"].(model.OfferInput)), true
+
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
 			break
@@ -145,6 +198,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.EditUser(childComplexity, args["userId"].(string), args["input"].(model.UserInput)), true
+
+	case "Mutation.requestOfferRevision":
+		if e.complexity.Mutation.RequestOfferRevision == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestOfferRevision_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RequestOfferRevision(childComplexity, args["offerId"].(string)), true
+
+	case "Mutation.setOfferDescription":
+		if e.complexity.Mutation.SetOfferDescription == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setOfferDescription_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetOfferDescription(childComplexity, args["offerId"].(string), args["input"].(*model.OfferDescriptionInput)), true
+
+	case "Mutation.setOfferPublishedState":
+		if e.complexity.Mutation.SetOfferPublishedState == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setOfferPublishedState_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetOfferPublishedState(childComplexity, args["offerId"].(string), args["state"].(*model.PublishedState)), true
 
 	case "Mutation.setUserPassword":
 		if e.complexity.Mutation.SetUserPassword == nil {
@@ -182,12 +271,59 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetUserSuspended(childComplexity, args["userId"].(string), args["suspended"].(bool)), true
 
+	case "Offer.category":
+		if e.complexity.Offer.Category == nil {
+			break
+		}
+
+		return e.complexity.Offer.Category(childComplexity), true
+
 	case "Offer.description":
 		if e.complexity.Offer.Description == nil {
 			break
 		}
 
-		return e.complexity.Offer.Description(childComplexity), true
+		args, err := ec.field_Offer_description_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Offer.Description(childComplexity, args["language"].(string)), true
+
+	case "Offer.descriptions":
+		if e.complexity.Offer.Descriptions == nil {
+			break
+		}
+
+		return e.complexity.Offer.Descriptions(childComplexity), true
+
+	case "Offer.HourlyPriceFiat":
+		if e.complexity.Offer.HourlyPriceFiat == nil {
+			break
+		}
+
+		return e.complexity.Offer.HourlyPriceFiat(childComplexity), true
+
+	case "Offer.HourlyPriceTokens":
+		if e.complexity.Offer.HourlyPriceTokens == nil {
+			break
+		}
+
+		return e.complexity.Offer.HourlyPriceTokens(childComplexity), true
+
+	case "Offer.id":
+		if e.complexity.Offer.ID == nil {
+			break
+		}
+
+		return e.complexity.Offer.ID(childComplexity), true
+
+	case "Offer.publishedState":
+		if e.complexity.Offer.PublishedState == nil {
+			break
+		}
+
+		return e.complexity.Offer.PublishedState(childComplexity), true
 
 	case "Offer.title":
 		if e.complexity.Offer.Title == nil {
@@ -195,6 +331,60 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Offer.Title(childComplexity), true
+
+	case "OfferCategory.code":
+		if e.complexity.OfferCategory.Code == nil {
+			break
+		}
+
+		return e.complexity.OfferCategory.Code(childComplexity), true
+
+	case "OfferCategory.id":
+		if e.complexity.OfferCategory.ID == nil {
+			break
+		}
+
+		return e.complexity.OfferCategory.ID(childComplexity), true
+
+	case "OfferCategory.offers":
+		if e.complexity.OfferCategory.Offers == nil {
+			break
+		}
+
+		args, err := ec.field_OfferCategory_offers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.OfferCategory.Offers(childComplexity, args["pagination"].(*model.Pagination)), true
+
+	case "OfferDescription.description":
+		if e.complexity.OfferDescription.Description == nil {
+			break
+		}
+
+		return e.complexity.OfferDescription.Description(childComplexity), true
+
+	case "OfferDescription.id":
+		if e.complexity.OfferDescription.ID == nil {
+			break
+		}
+
+		return e.complexity.OfferDescription.ID(childComplexity), true
+
+	case "OfferDescription.language":
+		if e.complexity.OfferDescription.Language == nil {
+			break
+		}
+
+		return e.complexity.OfferDescription.Language(childComplexity), true
+
+	case "OfferDescription.title":
+		if e.complexity.OfferDescription.Title == nil {
+			break
+		}
+
+		return e.complexity.OfferDescription.Title(childComplexity), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -427,7 +617,34 @@ type UserRoles {
 
 directive @hasRole(role: String!) on FIELD_DEFINITION
 
+type OfferCategory {
+    id: String!
+    code: String!
+    offers(pagination: Pagination): [Offer!]!
+}
+
+enum PublishedState {
+    Draft
+    Published
+    PendingReview
+    ChangesRequested
+    Rejected
+}
+
 type Offer {
+    id: String!
+    category: OfferCategory
+    title: String!
+    HourlyPriceFiat: Float!
+    HourlyPriceTokens: Float!
+    descriptions: [OfferDescription!]
+    description(language: String!): OfferDescription!
+    publishedState: PublishedState!
+}
+
+type OfferDescription {
+    id: String!
+    language: String!
     title: String!
     description: String!
 }
@@ -474,7 +691,26 @@ input SetRolesInput {
     roles:[String!]
 }
 
+input OfferInput {
+    categoryCode: String!
+    HourlyPriceFiat: Float!
+    HourlyPriceTokens: Float!
+}
+input OfferDescriptionInput {
+    language: String!
+    title: String!
+    description: String!
+}
+
+
 type Mutation {
+    setOfferDescription(offerId: String!, input: OfferDescriptionInput): Offer! @hasRole(role: "member")
+    addOffer(input: OfferInput!): User! @hasRole(role: "member")
+    editOffer(offerId: String!, input: OfferInput!): Offer! @hasRole(role: "member")
+    requestOfferRevision(offerId: String!): Offer! @hasRole(role: "member")
+
+    setOfferPublishedState(offerId: String!, state: PublishedState): Offer! @hasRole(role: "admin")
+
     addUser(input: UserInput!): User! @hasRole(role: "admin")
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
@@ -503,6 +739,21 @@ func (ec *executionContext) dir_hasRole_args(ctx context.Context, rawArgs map[st
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_addOffer_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.OfferInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNOfferInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -515,6 +766,30 @@ func (ec *executionContext) field_Mutation_addUser_args(ctx context.Context, raw
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editOffer_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["offerId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offerId"] = arg0
+	var arg1 model.OfferInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNOfferInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -539,6 +814,69 @@ func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, ra
 		}
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_requestOfferRevision_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["offerId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setOfferDescription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["offerId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offerId"] = arg0
+	var arg1 *model.OfferDescriptionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalOOfferDescriptionInput2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescriptionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setOfferPublishedState_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["offerId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offerId"] = arg0
+	var arg1 *model.PublishedState
+	if tmp, ok := rawArgs["state"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+		arg1, err = ec.unmarshalOPublishedState2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["state"] = arg1
 	return args, nil
 }
 
@@ -611,6 +949,36 @@ func (ec *executionContext) field_Mutation_setUserSuspended_args(ctx context.Con
 		}
 	}
 	args["suspended"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_OfferCategory_offers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg0, err = ec.unmarshalOPagination2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Offer_description_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["language"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("language"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["language"] = arg0
 	return args, nil
 }
 
@@ -696,6 +1064,336 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Mutation_setOfferDescription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setOfferDescription_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().SetOfferDescription(rctx, args["offerId"].(string), args["input"].(*model.OfferDescriptionInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "member")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Offer); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.Offer`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_addOffer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addOffer_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AddOffer(rctx, args["input"].(model.OfferInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "member")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editOffer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editOffer_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().EditOffer(rctx, args["offerId"].(string), args["input"].(model.OfferInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "member")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Offer); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.Offer`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_requestOfferRevision(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_requestOfferRevision_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RequestOfferRevision(rctx, args["offerId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "member")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Offer); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.Offer`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setOfferPublishedState(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setOfferPublishedState_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().SetOfferPublishedState(rctx, args["offerId"].(string), args["state"].(*model.PublishedState))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "admin")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Offer); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gitlab.com/amiiit/arco/graph/model.Offer`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Mutation_addUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -1024,6 +1722,73 @@ func (ec *executionContext) _Mutation_setUserSuspended(ctx context.Context, fiel
 	return ec.marshalOUser2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Offer_id(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Offer_category(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Category, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.OfferCategory)
+	fc.Result = res
+	return ec.marshalOOfferCategory2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferCategory(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Offer_title(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1059,6 +1824,108 @@ func (ec *executionContext) _Offer_title(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Offer_HourlyPriceFiat(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HourlyPriceFiat, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Offer_HourlyPriceTokens(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HourlyPriceTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Offer_descriptions(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Descriptions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.OfferDescription)
+	fc.Result = res
+	return ec.marshalOOfferDescription2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescriptionᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Offer_description(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1068,6 +1935,300 @@ func (ec *executionContext) _Offer_description(ctx context.Context, field graphq
 	}()
 	fc := &graphql.FieldContext{
 		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Offer_description_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.OfferDescription)
+	fc.Result = res
+	return ec.marshalNOfferDescription2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescription(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Offer_publishedState(ctx context.Context, field graphql.CollectedField, obj *model.Offer) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublishedState, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PublishedState)
+	fc.Result = res
+	return ec.marshalNPublishedState2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferCategory_id(ctx context.Context, field graphql.CollectedField, obj *model.OfferCategory) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferCategory",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferCategory_code(ctx context.Context, field graphql.CollectedField, obj *model.OfferCategory) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferCategory",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Code, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferCategory_offers(ctx context.Context, field graphql.CollectedField, obj *model.OfferCategory) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferCategory",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_OfferCategory_offers_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Offers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferDescription_id(ctx context.Context, field graphql.CollectedField, obj *model.OfferDescription) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferDescription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferDescription_language(ctx context.Context, field graphql.CollectedField, obj *model.OfferDescription) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferDescription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Language, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferDescription_title(ctx context.Context, field graphql.CollectedField, obj *model.OfferDescription) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferDescription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OfferDescription_description(ctx context.Context, field graphql.CollectedField, obj *model.OfferDescription) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OfferDescription",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -2934,6 +4095,78 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputOfferDescriptionInput(ctx context.Context, obj interface{}) (model.OfferDescriptionInput, error) {
+	var it model.OfferDescriptionInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "language":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("language"))
+			it.Language, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputOfferInput(ctx context.Context, obj interface{}) (model.OfferInput, error) {
+	var it model.OfferInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "categoryCode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryCode"))
+			it.CategoryCode, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "HourlyPriceFiat":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("HourlyPriceFiat"))
+			it.HourlyPriceFiat, err = ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "HourlyPriceTokens":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("HourlyPriceTokens"))
+			it.HourlyPriceTokens, err = ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj interface{}) (model.Pagination, error) {
 	var it model.Pagination
 	var asMap = obj.(map[string]interface{})
@@ -3101,6 +4334,31 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "setOfferDescription":
+			out.Values[i] = ec._Mutation_setOfferDescription(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "addOffer":
+			out.Values[i] = ec._Mutation_addOffer(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "editOffer":
+			out.Values[i] = ec._Mutation_editOffer(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "requestOfferRevision":
+			out.Values[i] = ec._Mutation_requestOfferRevision(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "setOfferPublishedState":
+			out.Values[i] = ec._Mutation_setOfferPublishedState(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "addUser":
 			out.Values[i] = ec._Mutation_addUser(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -3145,13 +4403,116 @@ func (ec *executionContext) _Offer(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Offer")
+		case "id":
+			out.Values[i] = ec._Offer_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "category":
+			out.Values[i] = ec._Offer_category(ctx, field, obj)
 		case "title":
 			out.Values[i] = ec._Offer_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "HourlyPriceFiat":
+			out.Values[i] = ec._Offer_HourlyPriceFiat(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "HourlyPriceTokens":
+			out.Values[i] = ec._Offer_HourlyPriceTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "descriptions":
+			out.Values[i] = ec._Offer_descriptions(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Offer_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "publishedState":
+			out.Values[i] = ec._Offer_publishedState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerCategoryImplementors = []string{"OfferCategory"}
+
+func (ec *executionContext) _OfferCategory(ctx context.Context, sel ast.SelectionSet, obj *model.OfferCategory) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerCategoryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OfferCategory")
+		case "id":
+			out.Values[i] = ec._OfferCategory_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "code":
+			out.Values[i] = ec._OfferCategory_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "offers":
+			out.Values[i] = ec._OfferCategory_offers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerDescriptionImplementors = []string{"OfferDescription"}
+
+func (ec *executionContext) _OfferDescription(ctx context.Context, sel ast.SelectionSet, obj *model.OfferDescription) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerDescriptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OfferDescription")
+		case "id":
+			out.Values[i] = ec._OfferDescription_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "language":
+			out.Values[i] = ec._OfferDescription_language(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "title":
+			out.Values[i] = ec._OfferDescription_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "description":
+			out.Values[i] = ec._OfferDescription_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3632,6 +4993,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloat(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloat(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3662,6 +5038,47 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNOffer2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx context.Context, sel ast.SelectionSet, v model.Offer) graphql.Marshaler {
+	return ec._Offer(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOffer2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Offer) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOffer(ctx context.Context, sel ast.SelectionSet, v *model.Offer) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3670,6 +5087,31 @@ func (ec *executionContext) marshalNOffer2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgrap
 		return graphql.Null
 	}
 	return ec._Offer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOfferDescription2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescription(ctx context.Context, sel ast.SelectionSet, v *model.OfferDescription) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._OfferDescription(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNOfferInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferInput(ctx context.Context, v interface{}) (model.OfferInput, error) {
+	res, err := ec.unmarshalInputOfferInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNPublishedState2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx context.Context, v interface{}) (model.PublishedState, error) {
+	var res model.PublishedState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPublishedState2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx context.Context, sel ast.SelectionSet, v model.PublishedState) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNRolesInput2gitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐRolesInput(ctx context.Context, v interface{}) (model.RolesInput, error) {
@@ -4014,12 +5456,83 @@ func (ec *executionContext) marshalOOffer2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋg
 	return ret
 }
 
+func (ec *executionContext) marshalOOfferCategory2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferCategory(ctx context.Context, sel ast.SelectionSet, v *model.OfferCategory) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OfferCategory(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOOfferDescription2ᚕᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescriptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OfferDescription) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOfferDescription2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescription(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) unmarshalOOfferDescriptionInput2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐOfferDescriptionInput(ctx context.Context, v interface{}) (*model.OfferDescriptionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputOfferDescriptionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOPagination2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPagination(ctx context.Context, v interface{}) (*model.Pagination, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputPagination(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOPublishedState2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx context.Context, v interface{}) (*model.PublishedState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.PublishedState)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOPublishedState2ᚖgitlabᚗcomᚋamiiitᚋarcoᚋgraphᚋmodelᚐPublishedState(ctx context.Context, sel ast.SelectionSet, v *model.PublishedState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

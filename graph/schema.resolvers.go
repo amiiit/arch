@@ -12,6 +12,26 @@ import (
 	"gitlab.com/amiiit/arco/user"
 )
 
+func (r *mutationResolver) SetOfferDescription(ctx context.Context, offerID string, input *model.OfferDescriptionInput) (*model.Offer, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) AddOffer(ctx context.Context, input model.OfferInput) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) EditOffer(ctx context.Context, offerID string, input model.OfferInput) (*model.Offer, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) RequestOfferRevision(ctx context.Context, offerID string) (*model.Offer, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) SetOfferPublishedState(ctx context.Context, offerID string, state *model.PublishedState) (*model.Offer, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) AddUser(ctx context.Context, input model.UserInput) (*model.User, error) {
 	// todo: authentication and roles
 	userInput := input.ToUser()

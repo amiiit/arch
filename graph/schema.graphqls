@@ -22,7 +22,34 @@ type UserRoles {
 
 directive @hasRole(role: String!) on FIELD_DEFINITION
 
+type OfferCategory {
+    id: String!
+    code: String!
+    offers(pagination: Pagination): [Offer!]!
+}
+
+enum PublishedState {
+    Draft
+    Published
+    PendingReview
+    ChangesRequested
+    Rejected
+}
+
 type Offer {
+    id: String!
+    category: OfferCategory
+    title: String!
+    HourlyPriceFiat: Float!
+    HourlyPriceTokens: Float!
+    descriptions: [OfferDescription!]
+    description(language: String!): OfferDescription!
+    publishedState: PublishedState!
+}
+
+type OfferDescription {
+    id: String!
+    language: String!
     title: String!
     description: String!
 }
@@ -69,7 +96,26 @@ input SetRolesInput {
     roles:[String!]
 }
 
+input OfferInput {
+    categoryCode: String!
+    HourlyPriceFiat: Float!
+    HourlyPriceTokens: Float!
+}
+input OfferDescriptionInput {
+    language: String!
+    title: String!
+    description: String!
+}
+
+
 type Mutation {
+    setOfferDescription(offerId: String!, input: OfferDescriptionInput): Offer! @hasRole(role: "member")
+    addOffer(input: OfferInput!): User! @hasRole(role: "member")
+    editOffer(offerId: String!, input: OfferInput!): Offer! @hasRole(role: "member")
+    requestOfferRevision(offerId: String!): Offer! @hasRole(role: "member")
+
+    setOfferPublishedState(offerId: String!, state: PublishedState): Offer! @hasRole(role: "admin")
+
     addUser(input: UserInput!): User! @hasRole(role: "admin")
     setUserPassword(userId: String!, newPassword: String!): User! @hasRole(role: "admin")
     editUser(userId: String!, input: UserInput!): User! @hasRole(role: "admin")
